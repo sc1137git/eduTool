@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動相簿 - 產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        /* 自訂卷軸 */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-track { background: #f1f5f9; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 左側：設定與控制區 -->
+    <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 p-6 flex flex-col shadow-lg z-10 h-full overflow-y-auto">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">📸 活動相簿產生器</h1>
+        
+        <div class="space-y-4 flex-grow">
+            <!-- 學校/相簿名稱 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">學校 / 相簿名稱</label>
+                <input type="text" id="input-school-name" placeholder="例如：中正國小附設幼兒園" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" value="">
+            </div>
+
+            <!-- API Key 輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Google API Key</label>
+                <input type="text" id="input-api-key" placeholder="輸入您的 API Key" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" value="">
+            </div>
+
+            <!-- 主層資料夾輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">首頁資料夾 (Root Folder)</label>
+                <input type="text" id="input-root-folder" placeholder="貼上主要層網址或 ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" value="">
+                <p class="text-[10px] text-gray-400 mt-1">相簿最上層的首頁資料夾。</p>
+            </div>
+
+            <!-- 預設開啟資料夾輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">預設開啟層 (Default Folder)</label>
+                <input type="text" id="input-default-folder" placeholder="貼上預設進入層網址或 ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" value="">
+                <p class="text-[10px] text-gray-400 mt-1">一進入網頁時預設顯示的子目錄。</p>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 mt-2">
+                <button onclick="generateApp()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    生成我的相簿
+                </button>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="copyCode()" id="btn-copy" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors border border-gray-300 flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    複製 HTML 程式碼
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center text-xs text-gray-400">
+            Photo Album Generator &copy; 2026
+        </div>
+    </div>
+
+    <!-- 右側：預覽與程式碼區 -->
+    <div class="w-full md:w-2/3 lg:w-3/4 flex flex-col bg-gray-100 h-full">
+        <!-- 頁籤控制 -->
+        <div class="bg-white border-b border-gray-200 px-6 pt-4 flex gap-2">
+            <button onclick="switchTab('preview')" id="tab-preview" class="px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-orange-600 border-t border-l border-r border-gray-200 transition-colors">
+                網頁預覽
+            </button>
+            <button onclick="switchTab('code')" id="tab-code" class="px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors">
+                HTML 程式碼
+            </button>
+        </div>
+
+        <!-- 內容顯示區 -->
+        <div class="flex-grow p-6 relative overflow-hidden flex">
+            <!-- 預覽 iframe -->
+            <div id="view-preview" class="w-full h-full rounded-xl shadow-inner border-2 border-gray-300 bg-white overflow-hidden">
+                <iframe id="preview-iframe" class="w-full h-full border-none" srcdoc="<div style='display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;font-family:sans-serif;color:#94a3b8;background-color:#f8fafc;'><svg style='width:48px;height:48px;margin-bottom:16px;color:#cbd5e1;' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'></path></svg><p>請在左側輸入資訊後，點擊「生成我的相簿」</p></div>"></iframe>
+            </div>
+
+            <!-- 程式碼 Textarea -->
+            <div id="view-code" class="w-full h-full hidden">
+                <textarea id="code-output" readonly class="w-full h-full p-4 font-mono text-sm bg-gray-900 text-green-400 rounded-xl shadow-inner outline-none resize-none whitespace-pre overflow-auto" placeholder="尚未生成程式碼..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 這是相簿的模板，用隱藏的 textarea 裝起來避免被瀏覽器解析 -->
+    <textarea id="app-template" class="hidden">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SCHOOL_NAME}}活動相簿</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fff9f0; 
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 3px solid #f39c12;
+            box-shadow: 0 2px 5px rgba(243, 156, 18, 0.1);
+        }
+
+        .item-card {
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #ffe4bc;
+            position: relative;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px -10px rgba(243, 156, 18, 0.4);
+            border-color: #f39c12;
+        }
+
+        .item-card.selected {
+            border: 3px solid #f39c12;
+            background: #fff1e0;
+        }
+
+        .card-cover {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-size: cover;
+            background-position: center;
+            background-color: #fff1e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .select-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 2px solid #f39c12;
+            border-radius: 4px;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .selecting .select-overlay { display: flex; }
+        .selected .select-overlay { background: #f39c12; color: white; }
+
+        .folder-title {
+            padding: 10px 8px;
+            text-align: center;
+            background: #ffffff;
+            border-top: 1px solid #fff1e0;
+        }
+
+        .folder-placeholder {
+            color: #f39c12;
+            font-size: 2.5rem;
+            opacity: 0.4;
+        }
+
+        .control-btn {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1.2rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .control-btn:hover { background-color: #f39c12; transform: scale(1.1); color: white; }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .loading-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #f39c12;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <header class="sticky top-0 z-40">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <h1 class="text-xl font-bold text-gray-800">{{SCHOOL_NAME}} <span class="text-[#f39c12]">活動相簿</span></h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="refresh-btn" class="text-gray-400 hover:text-[#f39c12] text-xl transition"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 py-5 flex flex-wrap justify-between items-center gap-4">
+            <div id="breadcrumb" class="text-sm text-gray-500 flex items-center">
+                <span class="cursor-pointer hover:text-[#f39c12] transition" onclick="load(rootFolderId)">首頁</span>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button id="toggle-select-mode" class="action-btn bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    <i class="fas fa-check-square"></i> 選取照片
+                </button>
+                <button id="batch-download" class="action-btn bg-[#f39c12] text-white hidden">
+                    <i class="fas fa-file-archive"></i> 下載選中項目 (<span id="select-count">0</span>)
+                </button>
+                <a id="open-drive-btn" target="_blank" class="action-btn bg-white border border-gray-200 text-[#4285F4] shadow-sm hidden">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" width="18">
+                    開啟雲端資料夾
+                </a>
+            </div>
+        </div>
+
+        <main class="container mx-auto px-4 pb-20">
+            <div id="loading-area" class="flex flex-col items-center justify-center py-20">
+                <div class="loading-spinner mb-4"></div>
+                <p id="loading-text" class="text-gray-400 text-sm italic">正在載入相簿...</p>
+            </div>
+
+            <div id="main-content" class="hidden">
+                <div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-12"></div>
+                <div id="files-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            </div>
+        </main>
+
+        <div id="viewer" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col backdrop-blur-xl">
+            <div class="flex justify-end items-center p-6 space-x-4 z-[70]">
+                <button id="btn-download" class="control-btn" title="下載檔案"><i class="fas fa-download"></i></button>
+                <button id="btn-rotate" class="control-btn" title="旋轉圖片"><i class="fas fa-redo"></i></button>
+                <button id="btn-slideshow" class="control-btn" title="播放幻燈片"><i class="fas fa-play"></i></button>
+                <button id="btn-close" class="control-btn bg-red-600/80 hover:bg-red-600 border-none" title="關閉"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="flex-grow flex items-center justify-center relative">
+                <button id="btn-prev" class="absolute left-6 text-white/30 hover:text-white text-5xl z-[60] p-4 transition-all"><i class="fas fa-chevron-left"></i></button>
+                <div id="media-stage" class="max-w-full max-h-full flex items-center justify-center p-4">
+                    <img id="view-img" class="max-w-full max-h-[85vh] object-contain transition-transform duration-300 shadow-2xl" src="" style="display:none;">
+                    <video id="view-video" class="max-w-full max-h-[85vh]" controls style="display:none;"></video>
+                    <iframe id="view-mov" class="w-[90vw] h-[75vh] border-0" style="display:none;"></iframe>
+                </div>
+                <button id="btn-next" class="absolute right-6 text-white/30 hover:text-white text-5xl z-[60] p-4 transition-all"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 設定區
+        const rootFolderId = '{{ROOT_FOLDER_ID}}'; // 主要層 (首頁)
+        const defaultFolderId = '{{DEFAULT_FOLDER_ID}}'; // 預設進入層
+        const apiKey = '{{API_KEY}}'; // API KEY
+        const driveApiUrl = 'https://www.googleapis.com/drive/v3';
+
+        let currentId = '';
+        let mediaList = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let isSelectMode = false;
+        let selectedIds = new Set();
+        let playTimer = null;
+        let rotations = {};
+
+        // 啟動時載入預設資料夾
+        window.onload = () => { 
+            load(defaultFolderId); 
+            bindEvents(); 
+        };
+
+        function bindEvents() {
+            document.getElementById('btn-close').onclick = closeViewer;
+            document.getElementById('btn-prev').onclick = prev;
+            document.getElementById('btn-next').onclick = next;
+            document.getElementById('btn-rotate').onclick = rotate;
+            document.getElementById('btn-slideshow').onclick = togglePlay;
+            document.getElementById('btn-download').onclick = downloadCurrent;
+            document.getElementById('refresh-btn').onclick = () => load(currentId);
+            document.getElementById('toggle-select-mode').onclick = toggleSelectMode;
+            document.getElementById('batch-download').onclick = startBatchDownload;
+        }
+
+        async function load(id) {
+            currentId = id;
+            isSelectMode = false;
+            selectedIds.clear();
+            updateUIForSelectMode();
+            showLoading(true, "正在讀取雲端內容...");
+            
+            try {
+                const meta = await fetch(`${driveApiUrl}/files/${id}?fields=name&key=${apiKey}`).then(r => r.json());
+                
+                // 1. 抓取資料夾
+                const fQuery = `'${id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+                const fRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(fQuery)}&fields=files(id,name)&key=${apiKey}`).then(r => r.json());
+                let folders = fRes.files || [];
+                
+                folders.sort((a, b) => {
+                    const getNum = (str) => {
+                        const match = str.match(/^\d+/);
+                        return match ? parseInt(match[0], 10) : 0;
+                    };
+                    const numA = getNum(a.name);
+                    const numB = getNum(b.name);
+                    if (numA !== numB) return numB - numA; 
+                    return b.name.localeCompare(a.name);
+                });
+
+                // 2. 抓取照片與影片
+                const mQuery = `'${id}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed=false`;
+                const mRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(mQuery)}&fields=files(id,name,mimeType)&key=${apiKey}&orderBy=name desc`).then(r => r.json());
+                let files = mRes.files || [];
+                
+                render(meta.name, folders, files);
+            } catch (err) { console.error(err); } finally { showLoading(false); }
+        }
+
+        function render(name, folders, files) {
+            updateBread(name);
+            const fGrid = document.getElementById('folders-grid');
+            const mGrid = document.getElementById('files-grid');
+            const mContainer = document.getElementById('main-content');
+            fGrid.innerHTML = ''; mGrid.innerHTML = '';
+
+            const driveBtn = document.getElementById('open-drive-btn');
+            driveBtn.href = `https://drive.google.com/drive/folders/${currentId}`;
+            driveBtn.classList.remove('hidden');
+
+            folders.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'item-card cursor-pointer group';
+                card.innerHTML = `
+                    <div class="card-cover" id="cover-${f.id}">
+                        <i class="fas fa-folder folder-placeholder"></i>
+                    </div>
+                    <div class="folder-title">
+                        <p class="text-sm font-bold text-gray-700 truncate">${f.name}</p>
+                    </div>`;
+                card.onclick = () => load(f.id);
+                fGrid.appendChild(card);
+                fetchCover(f.id);
+            });
+
+            mediaList = files.map(f => ({
+                id: f.id,
+                name: f.name,
+                isImg: f.mimeType.startsWith('image/'),
+                isMov: f.name.toLowerCase().endsWith('.mov'),
+                thumb: `https://drive.google.com/thumbnail?id=${f.id}&sz=w600`,
+                src: f.mimeType.startsWith('image/') ? `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600` : `https://drive.google.com/uc?export=download&id=${f.id}`,
+                downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
+                preview: `https://drive.google.com/file/d/${f.id}/preview`
+            }));
+
+            mediaList.forEach((m, i) => {
+                const card = document.createElement('div');
+                card.className = 'item-card cursor-pointer media-item';
+                card.dataset.id = m.id;
+                card.innerHTML = `
+                    <div class="card-cover">
+                        <div class="select-overlay"><i class="fas fa-check"></i></div>
+                        <img src="${m.thumb}" class="w-full h-full object-cover" loading="lazy">
+                        ${!m.isImg ? '<div class="absolute inset-0 flex items-center justify-center bg-black/20"><i class="fas fa-play text-white text-3xl"></i></div>' : ''}
+                    </div>`;
+                card.onclick = () => isSelectMode ? toggleSelectItem(m.id, card) : openViewer(i);
+                mGrid.appendChild(card);
+            });
+            mContainer.classList.remove('hidden');
+            document.getElementById('toggle-select-mode').classList.toggle('hidden', mediaList.length === 0);
+        }
+
+        function toggleSelectMode() {
+            isSelectMode = !isSelectMode;
+            const btn = document.getElementById('toggle-select-mode');
+            const grid = document.getElementById('files-grid');
+            if (isSelectMode) {
+                btn.innerHTML = '<i class="fas fa-times"></i> 取消選取';
+                btn.classList.replace('bg-gray-200', 'bg-gray-700'); btn.classList.replace('text-gray-700', 'text-white');
+                grid.classList.add('selecting');
+            } else {
+                btn.innerHTML = '<i class="fas fa-check-square"></i> 選取照片';
+                btn.classList.replace('bg-gray-700', 'bg-gray-200'); btn.classList.replace('text-white', 'text-gray-700');
+                grid.classList.remove('selecting');
+                selectedIds.clear(); document.querySelectorAll('.media-item').forEach(el => el.classList.remove('selected'));
+            }
+            updateUIForSelectMode();
+        }
+
+        function toggleSelectItem(id, element) {
+            if (selectedIds.has(id)) { selectedIds.delete(id); element.classList.remove('selected'); }
+            else { selectedIds.add(id); element.classList.add('selected'); }
+            updateUIForSelectMode();
+        }
+
+        function updateUIForSelectMode() {
+            const batchBtn = document.getElementById('batch-download');
+            document.getElementById('select-count').innerText = selectedIds.size;
+            batchBtn.classList.toggle('hidden', selectedIds.size === 0);
+        }
+
+        async function startBatchDownload() {
+            showLoading(true, `正在打包 ${selectedIds.size} 個檔案...`);
+            const zip = new JSZip();
+            const downloadItems = mediaList.filter(m => selectedIds.has(m.id));
+            try {
+                for (let item of downloadItems) {
+                    const response = await fetch(item.downloadUrl);
+                    const blob = await response.blob();
+                    zip.file(item.name, blob);
+                }
+                const content = await zip.generateAsync({type:"blob"});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `相簿下載_${new Date().getTime()}.zip`;
+                link.click();
+                toggleSelectMode();
+            } catch (err) { alert("下載失敗。"); } finally { showLoading(false); }
+        }
+
+        async function fetchCover(fid) {
+            try {
+                const q = `'${fid}' in parents and mimeType contains 'image/' and trashed=false`;
+                const res = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
+                if (res.files && res.files.length > 0) {
+                    setCoverImage(fid, res.files[0].id);
+                } else {
+                    const fQ = `'${fid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+                    const fRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(fQ)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
+                    if (fRes.files && fRes.files.length > 0) {
+                        const subQ = `'${fRes.files[0].id}' in parents and mimeType contains 'image/' and trashed=false`;
+                        const subRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(subQ)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
+                        if (subRes.files && subRes.files.length > 0) setCoverImage(fid, subRes.files[0].id);
+                    }
+                }
+            } catch (err) {}
+        }
+
+        function setCoverImage(folderId, imageId) {
+            const el = document.getElementById(`cover-${folderId}`);
+            if (el) { el.style.backgroundImage = `url(https://drive.google.com/thumbnail?id=${imageId}&sz=w600)`; el.innerHTML = ''; }
+        }
+
+        function openViewer(index) {
+            currentIndex = index; document.getElementById('viewer').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; showMedia();
+        }
+
+        function showMedia() {
+            const m = mediaList[currentIndex];
+            const img = document.getElementById('view-img'); const vid = document.getElementById('view-video'); const mov = document.getElementById('view-mov');
+            [img, vid, mov].forEach(el => el.style.display = 'none');
+            if (m.isImg) { img.src = m.src; img.style.display = 'block'; img.style.transform = `rotate(${rotations[m.id] || 0}deg)`; }
+            else if (m.isMov) { mov.src = m.preview; mov.style.display = 'block'; }
+            else { vid.src = m.src; vid.style.display = 'block'; vid.play(); }
+        }
+
+        function next() { currentIndex = (currentIndex + 1) % mediaList.length; showMedia(); }
+        function prev() { currentIndex = (currentIndex - 1 + mediaList.length) % mediaList.length; showMedia(); }
+        function rotate() {
+            const m = mediaList[currentIndex]; if (!m.isImg) return;
+            rotations[m.id] = ((rotations[m.id] || 0) + 90) % 360;
+            document.getElementById('view-img').style.transform = `rotate(${rotations[m.id]}deg)`;
+        }
+        function togglePlay() {
+            isPlaying = !isPlaying; const btn = document.getElementById('btn-slideshow');
+            if (isPlaying) { btn.innerHTML = '<i class="fas fa-pause"></i>'; playTimer = setInterval(next, 3000); }
+            else { btn.innerHTML = '<i class="fas fa-play"></i>'; clearInterval(playTimer); }
+        }
+        function downloadCurrent() {
+            const m = mediaList[currentIndex]; const link = document.createElement('a');
+            link.href = m.downloadUrl; link.download = m.name; link.target = '_blank'; link.click();
+        }
+        function closeViewer() {
+            document.getElementById('viewer').classList.add('hidden'); document.body.style.overflow = '';
+            document.getElementById('view-video').pause(); if (isPlaying) togglePlay();
+        }
+        function updateBread(name) {
+            const b = document.getElementById('breadcrumb');
+            b.innerHTML = `<span class="cursor-pointer hover:text-[#f39c12]" onclick="load(rootFolderId)">首頁</span>`;
+            if (currentId !== rootFolderId) {
+                b.innerHTML += ` <i class="fas fa-chevron-right text-[10px] mx-2 text-gray-300"></i> <span class="text-[#f39c12] font-bold">${name}</span>`;
+            }
+        }
+        function showLoading(s, text = "正在載入...") {
+            document.getElementById('loading-area').classList.toggle('hidden', !s);
+            document.getElementById('main-content').classList.toggle('hidden', s);
+            document.getElementById('loading-text').innerText = text;
+        }
+    </script>
+</body>
+</html>
+</textarea>
+
+    <!-- 產生器的主程式邏輯 -->
+    <script>
+        // 從網址中解析出 Folder ID
+        function extractFolderId(input) {
+            const match = input.match(/folders\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : input.trim(); 
+        }
+
+        // 生成相簿主函數
+        function generateApp() {
+            let schoolNameInput = document.getElementById('input-school-name').value.trim();
+            const apiKeyInput = document.getElementById('input-api-key').value.trim();
+            const rootFolderInput = document.getElementById('input-root-folder').value.trim();
+            const defaultFolderInput = document.getElementById('input-default-folder').value.trim();
+            
+            if (!apiKeyInput || !rootFolderInput || !defaultFolderInput) {
+                alert('請確實填寫 API Key 與兩個資料夾資訊！');
+                return;
+            }
+
+            // 若未填寫學校名稱，則給予預設值
+            if (!schoolNameInput) schoolNameInput = '活動相簿';
+
+            const rootFolderId = extractFolderId(rootFolderInput);
+            const defaultFolderId = extractFolderId(defaultFolderInput);
+            
+            // 讀取隱藏的模板
+            const template = document.getElementById('app-template').value;
+            
+            // 替換佔位符
+            const generatedHtml = template
+                .replace(/\{\{SCHOOL_NAME\}\}/g, schoolNameInput)
+                .replace(/\{\{API_KEY\}\}/g, apiKeyInput)
+                .replace(/\{\{ROOT_FOLDER_ID\}\}/g, rootFolderId)
+                .replace(/\{\{DEFAULT_FOLDER_ID\}\}/g, defaultFolderId);
+
+            // 更新到預覽 Iframe 
+            const iframe = document.getElementById('preview-iframe');
+            iframe.srcdoc = generatedHtml;
+
+            // 更新到程式碼 Textarea
+            const codeOutput = document.getElementById('code-output');
+            codeOutput.value = generatedHtml;
+
+            // 自動切換到預覽頁籤
+            switchTab('preview');
+            
+            // 替換按鈕文字提供視覺回饋
+            const btn = document.querySelector('button[onclick="generateApp()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ 生成成功！';
+            btn.classList.add('bg-green-500');
+            btn.classList.remove('bg-orange-500');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-500');
+                btn.classList.add('bg-orange-500');
+            }, 1500);
+        }
+
+        // 複製程式碼函數
+        function copyCode() {
+            const codeOutput = document.getElementById('code-output');
+            
+            if (!codeOutput.value) {
+                alert('請先點擊「生成我的相簿」！');
+                return;
+            }
+
+            codeOutput.select();
+            document.execCommand('copy');
+
+            // 按鈕視覺回饋
+            const btnCopy = document.getElementById('btn-copy');
+            const originalHtml = btnCopy.innerHTML;
+            btnCopy.innerHTML = '✅ 複製成功！';
+            btnCopy.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            
+            setTimeout(() => {
+                btnCopy.innerHTML = originalHtml;
+                btnCopy.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+            }, 2000);
+        }
+
+        // 切換頁籤
+        function switchTab(tabName) {
+            const viewPreview = document.getElementById('view-preview');
+            const viewCode = document.getElementById('view-code');
+            const tabPreview = document.getElementById('tab-preview');
+            const tabCode = document.getElementById('tab-code');
+
+            if (tabName === 'preview') {
+                viewPreview.classList.remove('hidden');
+                viewCode.classList.add('hidden');
+                
+                tabPreview.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-orange-600 border-t border-l border-r border-gray-200 transition-colors";
+                tabCode.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors";
+            } else {
+                viewPreview.classList.add('hidden');
+                viewCode.classList.remove('hidden');
+                
+                tabCode.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-orange-600 border-t border-l border-r border-gray-200 transition-colors";
+                tabPreview.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors";
+            }
+        }
+    </script>
+</body>
+</html>

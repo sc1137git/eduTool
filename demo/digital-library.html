@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位圖書櫃 - 產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        /* 自訂卷軸 */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-track { background: #f1f5f9; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 左側：設定與控制區 -->
+    <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 p-6 flex flex-col shadow-lg z-10 h-full overflow-y-auto">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">📚 圖書櫃產生器</h1>
+        
+        <div class="space-y-4 flex-grow">
+            <!-- API Key 輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Google API Key</label>
+                <input type="text" id="input-api-key" placeholder="輸入您的 API Key" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" value="">
+                <p class="text-[10px] text-gray-400 mt-1">請填入具備唯讀權限的 API Key。</p>
+            </div>
+
+            <!-- 主層資料夾輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">主層資料夾 (Parent Folder)</label>
+                <input type="text" id="input-parent-folder" placeholder="貼上主層網址或 ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" value="">
+                <p class="text-[10px] text-gray-400 mt-1">圖書櫃最上層的「數位圖書館」根目錄。</p>
+            </div>
+
+            <!-- 預設開啟資料夾輸入 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">預設層資料夾 (Default Folder)</label>
+                <input type="text" id="input-default-folder" placeholder="貼上預設層網址或 ID" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" value="">
+                <p class="text-[10px] text-gray-400 mt-1">一進入網頁時預設顯示的「刊物列表」子目錄。</p>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 mt-2">
+                <button onclick="generateApp()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    生成我的圖書櫃
+                </button>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="copyCode()" id="btn-copy" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors border border-gray-300 flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    複製 HTML 程式碼
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center text-xs text-gray-400">
+            Digital Bookshelf Generator &copy; 2026
+        </div>
+    </div>
+
+    <!-- 右側：預覽與程式碼區 -->
+    <div class="w-full md:w-2/3 lg:w-3/4 flex flex-col bg-gray-100 h-full">
+        <!-- 頁籤控制 -->
+        <div class="bg-white border-b border-gray-200 px-6 pt-4 flex gap-2">
+            <button onclick="switchTab('preview')" id="tab-preview" class="px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-amber-700 border-t border-l border-r border-gray-200 transition-colors">
+                網頁預覽
+            </button>
+            <button onclick="switchTab('code')" id="tab-code" class="px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors">
+                HTML 程式碼
+            </button>
+        </div>
+
+        <!-- 內容顯示區 -->
+        <div class="flex-grow p-6 relative overflow-hidden flex">
+            <!-- 預覽 iframe -->
+            <div id="view-preview" class="w-full h-full rounded-xl shadow-inner border-2 border-gray-300 bg-white overflow-hidden">
+                <iframe id="preview-iframe" class="w-full h-full border-none" srcdoc="<div style='display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;font-family:sans-serif;color:#94a3b8;background-color:#f8fafc;'><svg style='width:48px;height:48px;margin-bottom:16px;color:#cbd5e1;' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'></path></svg><p>請在左側輸入資訊後，點擊「生成我的圖書櫃」</p></div>"></iframe>
+            </div>
+
+            <!-- 程式碼 Textarea -->
+            <div id="view-code" class="w-full h-full hidden">
+                <textarea id="code-output" readonly class="w-full h-full p-4 font-mono text-sm bg-gray-900 text-green-400 rounded-xl shadow-inner outline-none resize-none whitespace-pre overflow-auto" placeholder="尚未生成程式碼..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 這是圖書櫃的模板，用隱藏的 textarea 裝起來避免被瀏覽器解析 -->
+    <textarea id="app-template" class="hidden">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位圖書櫃</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f5f5f5;
+            background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+            overflow-x: hidden; /* 防止水平捲動 */
+        }
+
+        /* === 書櫃樣式 === */
+        .bookshelf {
+            background-color: #8B4513; border-radius: 8px; padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 1300px;
+            min-height: 500px;
+        }
+        
+        /* 書本/圖片卡片 */
+        .book {
+            background-color: #fff; border-radius: 4px; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease; height: 380px; width: 100%; max-width: 260px; position: relative;
+            overflow: hidden; margin: 0 auto; z-index: 1; cursor: pointer; display: flex; flex-direction: column;
+        }
+        .book:hover { transform: translateY(-5px) rotate(1deg); box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.3); }
+
+        .book-spine {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 25px; background-color: #4a5568;
+            writing-mode: vertical-rl; text-orientation: mixed; padding: 10px 5px; color: #fff;
+            font-size: 0.75rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; z-index: 2;
+        }
+        /* 圖片的書脊改個顏色區分 */
+        .book.is-image .book-spine { background-color: #6b46c1; } /* 紫色 */
+
+        .book-content {
+            margin-left: 25px; padding: 10px; flex: 1; display: flex; flex-direction: column;
+            background: linear-gradient(135deg, #f8f4e3 0%, #e8e0d0 100%); border: 1px solid #d4c4b0;
+        }
+        
+        .pdf-preview {
+            flex: 1; background-color: #fff; border: 1px solid #e2e8f0; border-radius: 4px;
+            overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .pdf-preview img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* 資料夾樣式 */
+        .folder {
+            background-color: #fff; border-radius: 4px; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease; height: 380px; width: 100%; max-width: 260px; position: relative;
+            overflow: hidden; margin: 0 auto; z-index: 1; cursor: pointer; display: flex; flex-direction: column;
+        }
+        .folder:hover { transform: translateY(-5px); }
+        .folder-spine {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 25px; background-color: #f6ad55;
+            writing-mode: vertical-rl; text-orientation: mixed; padding: 10px 5px; color: #fff; font-size: 0.75rem;
+        }
+        .folder-content {
+            margin-left: 25px; padding: 10px; flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: linear-gradient(135deg, #e8f4f8 0%, #d4e7f0 100%);
+        }
+
+        /* 網格 RWD */
+        #content-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;
+        }
+        
+        /* 閱讀器彈出層 (原生 iframe) */
+        #reader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a; z-index: 9999; display: none; flex-direction: column;
+        }
+        .reader-header {
+            height: 50px; background: #000; display: flex; align-items: center; 
+            padding: 0 20px; justify-content: space-between; color: white; border-bottom: 1px solid #333; z-index: 20;
+        }
+        .reader-body { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; background: #333; }
+        
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* 載入動畫 */
+        .loading-spinner {
+            width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen pb-10">
+        <!-- 頂部導航 -->
+        <header class="bg-gradient-to-r from-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="navigateToRoot()">
+                    <i class="fas fa-book text-2xl"></i>
+                    <h1 class="text-2xl font-bold">數位圖書櫃</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- 返回上一層按鈕 -->
+                    <button id="up-level-btn" class="hidden bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-sm transition flex items-center gap-2" onclick="navigateUp()">
+                        <i class="fas fa-level-up-alt"></i> 返回上一層
+                    </button>
+                    <!-- 搜尋 -->
+                    <div class="relative hidden md:block">
+                        <input type="text" id="search-input" placeholder="搜尋書名..." class="bg-white/20 text-white placeholder-gray-300 rounded-full py-1 px-4 outline-none focus:bg-white/30 transition w-64">
+                        <i class="fas fa-search absolute right-3 top-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 麵包屑 -->
+        <div class="container mx-auto px-4 py-3">
+            <div id="breadcrumb" class="flex items-center text-sm text-gray-600 font-bold overflow-x-auto whitespace-nowrap"></div>
+        </div>
+
+        <!-- 主內容 -->
+        <main class="container mx-auto px-4">
+            <div id="loading" class="flex flex-col items-center justify-center py-20">
+                <div class="loading-spinner mb-4"></div>
+                <p class="text-gray-600 font-bold">正在讀取雲端書櫃...</p>
+            </div>
+            <div id="error-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-md mx-auto max-w-4xl"></div>
+            <div id="content" class="hidden">
+                <div class="bookshelf">
+                    <div id="content-grid"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 閱讀器 Overlay (原生 iframe) -->
+    <div id="reader-overlay">
+        <div class="reader-header">
+            <div class="flex items-center gap-4">
+                <button onclick="closeReader()" class="bg-gray-700 hover:bg-gray-600 px-4 py-1.5 rounded text-sm transition flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </button>
+                <span id="reader-title" class="font-bold truncate max-w-md text-gray-200 hidden md:block"></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleFullscreen()" class="bg-gray-800 hover:bg-gray-700 text-white w-8 h-8 rounded flex items-center justify-center" title="全螢幕"><i class="fas fa-expand"></i></button>
+            </div>
+        </div>
+        
+        <div class="reader-body">
+            <!-- 這裡使用 Google 原生預覽，畫質最好 -->
+            <iframe id="pdf-frame" src="" allow="autoplay"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // ===============================================
+        const API_KEY = '{{API_KEY}}'; 
+        const DEFAULT_FOLDER_ID = '{{DEFAULT_FOLDER_ID}}'; 
+        const PARENT_FOLDER_ID = '{{PARENT_FOLDER_ID}}';  
+        // ===============================================
+
+        let currentFolderId = DEFAULT_FOLDER_ID;
+        let currentPath = [];
+
+        // 初始化
+        window.onload = async () => {
+            try {
+                const [parentMeta, defaultMeta] = await Promise.all([
+                    fetchFileMeta(PARENT_FOLDER_ID),
+                    fetchFileMeta(DEFAULT_FOLDER_ID)
+                ]);
+                currentPath = [
+                    {id: PARENT_FOLDER_ID, name: parentMeta.name || '上一層'},
+                    {id: DEFAULT_FOLDER_ID, name: defaultMeta.name || '本層'}
+                ];
+                updateBreadcrumb();
+                loadFolderContents(DEFAULT_FOLDER_ID);
+            } catch (e) {
+                console.warn("無法自動取得資料夾名稱", e);
+                currentPath = [{id: PARENT_FOLDER_ID, name: '數位圖書館'}, {id: DEFAULT_FOLDER_ID, name: '刊物列表'}];
+                updateBreadcrumb();
+                loadFolderContents(DEFAULT_FOLDER_ID);
+            }
+        };
+
+        async function fetchFileMeta(id) {
+            const url = `https://www.googleapis.com/drive/v3/files/${id}?fields=name&key=${API_KEY}&supportsAllDrives=true`;
+            const res = await fetch(url);
+            return res.ok ? await res.json() : {name: '未知資料夾'};
+        }
+
+        // 1. 書櫃邏輯
+        async function loadFolderContents(folderId) {
+            showLoading();
+            const grid = document.getElementById('content-grid');
+            
+            try {
+                const upBtn = document.getElementById('up-level-btn');
+                if (folderId !== PARENT_FOLDER_ID) {
+                    upBtn.classList.remove('hidden');
+                    upBtn.onclick = navigateUp;
+                } else {
+                    upBtn.classList.add('hidden'); 
+                }
+
+                const query = `'${folderId}' in parents and trashed=false`;
+                const fields = 'files(id, name, mimeType, thumbnailLink)';
+                // 修正：補回共用雲端硬碟 (Shared Drive) 的必要參數
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&key=${API_KEY}&fields=${encodeURIComponent(fields)}&orderBy=folder,name&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API 錯誤: ${response.status} (請檢查資料夾權限)`);
+                }
+
+                const data = await response.json();
+                const files = data.files || [];
+
+                if (files.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center text-white py-10"><p class="text-xl">此資料夾是空的。</p></div>`;
+                    hideLoading();
+                    return;
+                }
+
+                grid.innerHTML = '';
+                
+                // 產生資料夾
+                files.filter(f => f.mimeType.includes('folder')).forEach(folder => {
+                    const el = document.createElement('div');
+                    el.className = 'folder';
+                    el.onclick = () => navigateToFolder(folder.id, folder.name);
+                    el.innerHTML = `<div class="folder-spine">${folder.name}</div><div class="folder-content"><i class="fas fa-folder-open text-6xl text-amber-400 mb-2"></i><p class="text-center font-bold px-2 line-clamp-2 text-gray-700">${folder.name}</p></div>`;
+                    grid.appendChild(el);
+                });
+
+                // 產生書本 (PDF 或 圖片)
+                // 修改：過濾條件加入 image
+                const readableFiles = files.filter(f => f.mimeType.includes('pdf') || f.mimeType.includes('image'));
+                
+                readableFiles.forEach(file => {
+                    const el = document.createElement('div');
+                    const isImage = file.mimeType.includes('image');
+                    el.className = `book ${isImage ? 'is-image' : ''}`;
+                    
+                    // 移除副檔名顯示
+                    const name = file.name.replace(/\.(pdf|jpg|jpeg|png|gif)$/i, '');
+                    const thumb = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s600') : '';
+                    const icon = isImage ? '<i class="fas fa-file-image text-5xl text-purple-500"></i>' : '<i class="fas fa-file-pdf text-5xl text-red-500"></i>';
+                    
+                    el.onclick = () => openReader(file.id, name);
+
+                    el.innerHTML = `
+                        <div class="book-spine">${name}</div>
+                        <div class="book-content">
+                            <div class="pdf-preview">
+                                ${thumb ? `<img src="${thumb}" loading="lazy">` : icon}
+                            </div>
+                            <div class="text-center mt-2 font-bold text-gray-700 text-sm truncate w-full px-1">${name}</div>
+                        </div>
+                    `;
+                    grid.appendChild(el);
+                });
+                
+                hideLoading();
+
+            } catch (error) {
+                console.error(error);
+                showError(error.message);
+                hideLoading();
+            }
+        }
+
+        // 2. 閱讀器主邏輯 (使用 Google 原生預覽，支援 PDF 與 圖片)
+        function openReader(id, title) {
+            const overlay = document.getElementById('reader-overlay');
+            const iframe = document.getElementById('pdf-frame');
+            document.getElementById('reader-title').textContent = title;
+            
+            // 使用 Google Drive 原生預覽連結 (畫質最好，支援原生縮放/搜尋，也支援圖片)
+            iframe.src = `https://drive.google.com/file/d/${id}/preview`;
+            
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeReader() {
+            const overlay = document.getElementById('reader-overlay');
+            const iframe = document.getElementById('pdf-frame');
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            iframe.src = ''; // 清空以停止載入
+        }
+
+        function toggleFullscreen() {
+            const elem = document.getElementById('reader-overlay');
+            if (!document.fullscreenElement) { elem.requestFullscreen().catch(err => alert(err.message)); } else { document.exitFullscreen(); }
+        }
+
+        function navigateToFolder(id, name) {
+            currentFolderId = id; currentPath.push({id, name}); updateBreadcrumb(); loadFolderContents(id);
+        }
+        
+        function navigateToRoot() {
+            fetchFileMeta(PARENT_FOLDER_ID).then(parent => {
+                fetchFileMeta(DEFAULT_FOLDER_ID).then(def => {
+                    currentPath = [{id: PARENT_FOLDER_ID, name: parent.name || '數位圖書館'}, {id: DEFAULT_FOLDER_ID, name: def.name || '刊物列表'}];
+                    updateBreadcrumb();
+                    loadFolderContents(DEFAULT_FOLDER_ID);
+                });
+            });
+        }
+
+        function navigateUp() {
+            if (currentPath.length > 1) {
+                currentPath.pop(); 
+                const parent = currentPath[currentPath.length - 1];
+                currentFolderId = parent.id;
+                updateBreadcrumb();
+                loadFolderContents(parent.id);
+            }
+        }
+
+        function updateBreadcrumb() {
+            const bc = document.getElementById('breadcrumb');
+            let html = '';
+            currentPath.forEach((p, i) => { 
+                if(i > 0) html += ` <span class="mx-2 text-gray-300">/</span> `;
+                const click = i === currentPath.length-1 ? '' : `onclick="navigateToPath(${i})"`;
+                const cls = i === currentPath.length-1 ? 'text-gray-800' : 'cursor-pointer hover:text-amber-800 text-gray-500';
+                const icon = i === 0 ? '<i class="fas fa-home"></i> ' : '';
+                html += `<span class="${cls} transition" ${click}>${icon}${p.name}</span>`;
+            });
+            bc.innerHTML = html;
+        }
+        
+        function navigateToPath(index) {
+            currentPath = currentPath.slice(0, index + 1);
+            const target = currentPath[currentPath.length - 1];
+            currentFolderId = target.id;
+            updateBreadcrumb();
+            loadFolderContents(target.id);
+        }
+
+        function showLoading() { document.getElementById('loading').classList.remove('hidden'); document.getElementById('content').classList.add('hidden'); }
+        function hideLoading() { document.getElementById('loading').classList.add('hidden'); document.getElementById('content').classList.remove('hidden'); }
+        function showError(msg) { const el = document.getElementById('error-message'); el.innerHTML = `❌ <b>發生錯誤：</b> ${msg}`; el.classList.remove('hidden'); }
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.book, .folder').forEach(el => { el.style.display = el.innerText.toLowerCase().includes(term) ? '' : 'none'; });
+        });
+    </script>
+</body>
+</html>
+</textarea>
+
+    <!-- 產生器的主程式邏輯 -->
+    <script>
+        // 從網址中解析出 Folder ID
+        function extractFolderId(input) {
+            const match = input.match(/folders\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : input.trim(); 
+        }
+
+        // 生成圖書櫃主函數
+        function generateApp() {
+            const apiKeyInput = document.getElementById('input-api-key').value.trim();
+            const parentFolderInput = document.getElementById('input-parent-folder').value.trim();
+            const defaultFolderInput = document.getElementById('input-default-folder').value.trim();
+            
+            if (!apiKeyInput || !parentFolderInput || !defaultFolderInput) {
+                alert('請確實填寫 API Key 與兩個資料夾資訊！');
+                return;
+            }
+
+            const parentFolderId = extractFolderId(parentFolderInput);
+            const defaultFolderId = extractFolderId(defaultFolderInput);
+            
+            // 讀取隱藏的模板
+            const template = document.getElementById('app-template').value;
+            
+            // 替換佔位符
+            const generatedHtml = template
+                .replace(/\{\{API_KEY\}\}/g, apiKeyInput)
+                .replace(/\{\{PARENT_FOLDER_ID\}\}/g, parentFolderId)
+                .replace(/\{\{DEFAULT_FOLDER_ID\}\}/g, defaultFolderId);
+
+            // 更新到預覽 Iframe 
+            const iframe = document.getElementById('preview-iframe');
+            iframe.srcdoc = generatedHtml;
+
+            // 更新到程式碼 Textarea
+            const codeOutput = document.getElementById('code-output');
+            codeOutput.value = generatedHtml;
+
+            // 自動切換到預覽頁籤
+            switchTab('preview');
+            
+            // 替換按鈕文字提供視覺回饋
+            const btn = document.querySelector('button[onclick="generateApp()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ 生成成功！';
+            btn.classList.add('bg-green-600');
+            btn.classList.remove('bg-amber-600');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600');
+                btn.classList.add('bg-amber-600');
+            }, 1500);
+        }
+
+        // 複製程式碼函數
+        function copyCode() {
+            const codeOutput = document.getElementById('code-output');
+            
+            if (!codeOutput.value) {
+                alert('請先點擊「生成我的圖書櫃」！');
+                return;
+            }
+
+            codeOutput.select();
+            document.execCommand('copy');
+
+            // 按鈕視覺回饋
+            const btnCopy = document.getElementById('btn-copy');
+            const originalHtml = btnCopy.innerHTML;
+            btnCopy.innerHTML = '✅ 複製成功！';
+            btnCopy.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            
+            setTimeout(() => {
+                btnCopy.innerHTML = originalHtml;
+                btnCopy.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+            }, 2000);
+        }
+
+        // 切換頁籤
+        function switchTab(tabName) {
+            const viewPreview = document.getElementById('view-preview');
+            const viewCode = document.getElementById('view-code');
+            const tabPreview = document.getElementById('tab-preview');
+            const tabCode = document.getElementById('tab-code');
+
+            if (tabName === 'preview') {
+                viewPreview.classList.remove('hidden');
+                viewCode.classList.add('hidden');
+                
+                tabPreview.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-amber-700 border-t border-l border-r border-gray-200 transition-colors";
+                tabCode.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors";
+            } else {
+                viewPreview.classList.add('hidden');
+                viewCode.classList.remove('hidden');
+                
+                tabCode.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg bg-gray-100 text-amber-700 border-t border-l border-r border-gray-200 transition-colors";
+                tabPreview.className = "px-6 py-2.5 text-sm font-bold rounded-t-lg text-gray-500 hover:bg-gray-50 transition-colors";
+            }
+        }
+    </script>
+</body>
+</html>
