@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研究探險隊</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1C1A2E;--surface:#26233D;--surface2:#312E4A;
+  --border:rgba(255,255,255,0.08);--border-strong:rgba(255,255,255,0.15);
+  --text-primary:#F0EEF8;--text-sec:#A09BBC;--text-hint:#6B6785;
+  --purple:#7C6FCD;--purple-light:#A99FE3;--purple-dark:#4A4199;
+  --teal:#3DBFA0;--teal-light:#6FD4BC;--amber:#F0A843;--green:#5BC47A;
+  --r-sm:8px;--r-md:12px;--r-lg:20px;--r-xl:28px;
+  --serif:'Noto Serif TC',serif;--sans:'Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:var(--sans);color:var(--text-primary);min-height:100vh;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── SETUP ── */
+#screen-setup{align-items:center;padding:2rem 1.25rem 3rem;gap:1.25rem;}
+.game-title{font-family:var(--serif);font-size:2.3rem;font-weight:900;background:linear-gradient(135deg,var(--purple-light),var(--teal-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;text-align:center;}
+.game-tagline{font-size:.94rem;color:var(--text-sec);text-align:center;letter-spacing:.04em;}
+
+.setup-card{width:100%;max-width:460px;background:var(--surface);border:.5px solid var(--border-strong);border-radius:var(--r-lg);padding:1.1rem 1.25rem;}
+.setup-label{font-size:.85rem;font-weight:500;color:var(--text-sec);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.65rem;}
+
+/* stage pills */
+.stage-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.stage-pill{padding:8px 16px;border-radius:20px;border:.5px solid var(--border-strong);background:transparent;font-size:.92rem;color:var(--text-sec);cursor:pointer;font-family:var(--sans);transition:all .15s;}
+.stage-pill.active{background:var(--purple);border-color:var(--purple);color:#fff;}
+
+/* name inputs */
+.player-inputs{display:flex;flex-direction:column;gap:7px;}
+.player-row{display:flex;align-items:center;gap:9px;}
+.player-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.player-input{flex:1;padding:10px 14px;background:var(--surface2);border:.5px solid var(--border);border-radius:var(--r-sm);font-family:var(--sans);font-size:.96rem;color:var(--text-primary);outline:none;}
+.player-input:focus{border-color:var(--purple);}
+.add-player-btn{padding:7px 12px;background:transparent;border:.5px dashed var(--border-strong);border-radius:var(--r-sm);color:var(--text-sec);cursor:pointer;font-size:.8rem;font-family:var(--sans);margin-top:6px;transition:all .1s;}
+.add-player-btn:hover{border-color:var(--purple);color:var(--purple-light);}
+
+/* big action buttons */
+.start-row{display:flex;gap:10px;width:100%;max-width:460px;}
+.btn-start{flex:1;padding:15px;border:none;border-radius:var(--r-lg);font-size:1.05rem;font-weight:500;font-family:var(--sans);cursor:pointer;transition:opacity .15s,transform .1s;}
+.btn-start:active{transform:scale(.98);}
+.btn-start:hover{opacity:.88;}
+.btn-group{background:linear-gradient(135deg,var(--purple-dark),var(--purple));color:#fff;}
+.btn-solo{background:var(--surface);border:.5px solid var(--border-strong);color:var(--text-primary);}
+
+/* collapsible advanced */
+.adv-toggle{width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;padding:8px 4px;background:transparent;border:none;color:var(--text-hint);font-size:.78rem;font-family:var(--sans);cursor:pointer;letter-spacing:.04em;}
+.adv-toggle span{transition:transform .2s;}
+.adv-section{width:100%;max-width:460px;display:flex;flex-direction:column;gap:1rem;overflow:hidden;max-height:0;transition:max-height .3s ease;}
+.adv-section.open{max-height:600px;}
+
+.api-row{display:flex;gap:8px;}
+.api-input{flex:1;padding:9px 12px;background:var(--surface2);border:.5px solid var(--border-strong);border-radius:var(--r-sm);font-family:'Courier New',monospace;font-size:.8rem;color:var(--text-primary);outline:none;transition:border-color .15s;}
+.api-input:focus{border-color:var(--purple);}
+.icon-btn{padding:9px 12px;background:var(--surface2);border:.5px solid var(--border);border-radius:var(--r-sm);color:var(--text-sec);cursor:pointer;font-size:13px;}
+.api-hint{font-size:.7rem;color:var(--text-hint);margin-top:.4rem;line-height:1.5;}
+.api-hint a{color:var(--purple-light);text-decoration:none;}
+.api-optional{font-size:.7rem;color:var(--teal);margin-top:3px;}
+
+.char-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.char-pill{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r-md);border:.5px solid var(--border-strong);background:var(--surface2);cursor:pointer;transition:all .15s;}
+.char-pill.active{border-color:var(--purple);border-width:1.5px;background:rgba(124,111,205,.15);}
+
+/* import zone */
+.import-zone{display:flex;flex-direction:column;gap:8px;}
+.import-textarea{width:100%;padding:9px 12px;background:var(--surface2);border:.5px solid var(--border);border-radius:var(--r-sm);font-family:'Courier New',monospace;font-size:.72rem;color:var(--text-sec);outline:none;resize:none;height:72px;}
+.import-btns{display:flex;gap:8px;}
+.btn-sm{padding:7px 14px;border-radius:var(--r-sm);font-size:.8rem;font-family:var(--sans);cursor:pointer;transition:all .1s;}
+.btn-sm-outline{background:transparent;border:.5px solid var(--border-strong);color:var(--text-sec);}
+.btn-sm-outline:hover{background:var(--surface2);}
+.btn-sm-fill{background:var(--purple);border:none;color:#fff;}
+.btn-sm-fill:hover{opacity:.85;}
+
+/* ── GAME ── */
+#screen-game{flex-direction:column;}
+.game-topbar{display:flex;align-items:center;gap:10px;padding:.8rem 1.1rem;background:var(--surface);border-bottom:.5px solid var(--border);flex-shrink:0;}
+.back-btn{width:30px;height:30px;border-radius:50%;border:.5px solid var(--border);background:transparent;color:var(--text-sec);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.back-btn:hover{background:var(--surface2);}
+.topbar-info{flex:1;font-size:.92rem;color:var(--text-sec);}
+.topbar-round{font-size:.9rem;color:var(--purple-light);font-weight:500;}
+.topbar-actions{display:flex;gap:6px;}
+.topbar-btn{padding:6px 13px;border-radius:12px;border:.5px solid var(--border);background:transparent;font-size:.82rem;color:var(--text-sec);cursor:pointer;font-family:var(--sans);}
+.topbar-btn:hover{background:var(--surface2);}
+
+.players-strip{display:flex;gap:7px;padding:.75rem 1.1rem 0;flex-shrink:0;overflow-x:auto;}
+.player-chip{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:20px;border:1.5px solid transparent;background:var(--surface);font-size:.92rem;color:var(--text-sec);flex-shrink:0;}
+.player-chip.active-player{border-color:var(--player-color,var(--purple));color:var(--text-primary);background:var(--surface2);}
+.player-chip .pip{width:7px;height:7px;border-radius:50%;background:var(--player-color,var(--purple));}
+
+/* history strip */
+.history-strip{display:flex;gap:8px;padding:.65rem 1.1rem;overflow-x:auto;flex-shrink:0;border-bottom:.5px solid var(--border);min-height:48px;align-items:flex-start;}
+.history-strip-empty{font-size:.72rem;color:var(--text-hint);align-self:center;letter-spacing:.04em;}
+.hchip{flex-shrink:0;width:140px;background:var(--surface2);border:.5px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;cursor:default;}
+.hchip-top{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.hchip-who{font-size:.78rem;font-weight:500;}
+.hchip-badge{font-size:.72rem;padding:1px 5px;border-radius:5px;}
+.hchip-pts{font-size:.78rem;margin-left:auto;font-weight:500;}
+.hchip-q{font-size:.78rem;color:var(--text-sec);line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* deck area */
+.deck-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.25rem 1.1rem 1.5rem;gap:1rem;min-height:0;}
+
+/* flip card */
+.flip-wrap{position:relative;width:100%;max-width:300px;perspective:800px;}
+.deck-shadow{position:absolute;border-radius:var(--r-xl);border:.5px solid var(--border-strong);background:var(--surface2);}
+.deck-shadow.s2{inset:10px 0 -10px;transform:rotate(3deg);opacity:.4;}
+.deck-shadow.s1{inset:5px 0 -5px;transform:rotate(1.5deg);opacity:.65;}
+.flip-wrap.clickable:hover .s1{transform:rotate(2.5deg) translateY(-2px);}
+.flip-wrap.clickable:hover .s2{transform:rotate(4.5deg) translateY(-4px);}
+.flip-card{position:relative;width:100%;transform-style:preserve-3d;transition:transform .52s cubic-bezier(.4,.2,.2,1);border-radius:var(--r-xl);}
+.flip-card.flipped{transform:rotateY(180deg);}
+.flip-face{border-radius:var(--r-xl);backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;}
+.flip-back{background:var(--surface);border:.5px solid var(--border-strong);padding:2.25rem 1.25rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:190px;cursor:pointer;}
+.flip-back-pat{position:absolute;inset:0;opacity:.07;background-image:repeating-linear-gradient(45deg,var(--purple) 0,var(--purple) 1px,transparent 1px,transparent 12px),repeating-linear-gradient(-45deg,var(--purple) 0,var(--purple) 1px,transparent 1px,transparent 12px);}
+.flip-back-icon{font-size:3.2rem;position:relative;}
+.flip-back-label{font-size:1rem;font-weight:500;position:relative;}
+.flip-back-sub{font-size:.84rem;color:var(--text-hint);position:relative;}
+.flip-front{position:absolute;inset:0;transform:rotateY(180deg);padding:1.25rem 1.1rem;display:flex;flex-direction:column;gap:10px;min-height:190px;}
+.flip-front.type-normal{background:var(--surface);border:.5px solid var(--border-strong);}
+.flip-front.type-task{background:linear-gradient(135deg,#1E2A3A,#1A2535);border:.5px solid rgba(61,191,160,.35);}
+.flip-front.type-challenge{background:linear-gradient(135deg,#2A1E1E,#251A1A);border:.5px solid rgba(240,168,67,.35);}
+.flip-front.type-skip{background:linear-gradient(135deg,#25202E,#20192C);border:.5px solid rgba(124,111,205,.35);}
+.card-badge{display:inline-flex;align-items:center;gap:5px;font-size:.82rem;font-weight:500;padding:3px 9px;border-radius:9px;}
+.card-q{font-family:var(--serif);font-size:1.2rem;font-weight:700;line-height:1.6;color:var(--text-primary);}
+.card-footer-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.card-stage-label{font-size:.78rem;color:var(--text-hint);}
+.card-diff{font-size:13px;letter-spacing:2px;}
+
+/* action zone */
+.action-zone{width:100%;max-width:300px;display:flex;flex-direction:column;gap:9px;animation:fup .28s ease-out;}
+@keyframes fup{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.action-label{font-size:.86rem;color:var(--text-sec);letter-spacing:.04em;}
+.answer-textarea{width:100%;padding:11px 14px;background:var(--surface);border:.5px solid var(--border-strong);border-radius:var(--r-md);font-family:var(--sans);font-size:.96rem;color:var(--text-primary);outline:none;resize:none;line-height:1.5;min-height:68px;transition:border-color .15s;}
+.answer-textarea:focus{border-color:var(--purple);}
+.btn-row{display:flex;gap:8px;}
+.btn-p{flex:1;padding:12px;background:var(--purple);border:none;border-radius:var(--r-md);color:#fff;font-size:.96rem;font-weight:500;font-family:var(--sans);cursor:pointer;transition:opacity .15s;}
+.btn-p:hover{opacity:.85;}
+.btn-p:disabled{opacity:.3;cursor:not-allowed;}
+.btn-s{padding:12px 16px;background:transparent;border:.5px solid var(--border-strong);border-radius:var(--r-md);color:var(--text-sec);font-size:.95rem;font-family:var(--sans);cursor:pointer;}
+.btn-s:hover{background:var(--surface2);}
+
+/* score picker */
+.score-picker{width:100%;max-width:300px;background:var(--surface2);border:.5px solid var(--border-strong);border-radius:var(--r-lg);padding:1rem 1.1rem;animation:fup .28s ease-out;}
+.score-picker-title{font-size:.9rem;font-weight:500;color:var(--text-sec);margin-bottom:.75rem;text-align:center;}
+.score-player-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;}
+.score-player-name{font-size:.95rem;display:flex;align-items:center;gap:7px;}
+.score-hearts{display:flex;gap:6px;align-items:center;}
+.heart-btn{background:transparent;border:none;font-size:1.6rem;cursor:pointer;transition:transform .15s,filter .15s;filter:grayscale(1) opacity(.35);padding:2px;}
+.heart-btn.active{filter:none;transform:scale(1.15);}
+.heart-pts{font-size:.88rem;font-weight:500;min-width:24px;text-align:left;}
+.score-confirm{width:100%;padding:12px;background:var(--purple);border:none;border-radius:var(--r-md);color:#fff;font-size:.98rem;font-weight:500;font-family:var(--sans);cursor:pointer;margin-top:.5rem;opacity:.35;}
+.score-confirm.ready{opacity:1;}
+
+/* AI bubble */
+.ai-bubble{background:var(--surface2);border:.5px solid var(--border);border-radius:var(--r-md);padding:.85rem 1rem;animation:fup .28s ease-out;}
+.ai-label{font-size:.8rem;color:var(--purple-light);font-weight:500;margin-bottom:4px;letter-spacing:.04em;}
+.ai-text{font-size:.96rem;line-height:1.65;}
+.ai-loading{display:flex;gap:5px;align-items:center;padding:3px 0;}
+.ai-dot{width:5px;height:5px;border-radius:50%;background:var(--purple);animation:bounce 1.1s infinite;}
+.ai-dot:nth-child(2){animation-delay:.18s;}
+.ai-dot:nth-child(3){animation-delay:.36s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+
+/* task */
+.task-zone{background:rgba(61,191,160,.08);border:.5px solid rgba(61,191,160,.25);border-radius:var(--r-md);padding:.85rem 1rem;}
+.task-zone-label{font-size:.82rem;font-weight:500;color:var(--teal-light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;}
+.task-items{display:flex;flex-direction:column;gap:5px;}
+.task-item{display:flex;align-items:center;gap:10px;font-size:.94rem;color:var(--text-sec);cursor:pointer;padding:2px 0;}
+.task-item.done{color:var(--teal-light);}
+.task-cb{width:17px;height:17px;border-radius:5px;flex-shrink:0;border:1.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s;}
+.task-item.done .task-cb{background:var(--teal);border-color:var(--teal);color:#fff;}
+
+/* SOLO screen */
+#screen-solo{flex-direction:column;}
+.solo-topbar{display:flex;align-items:center;gap:10px;padding:.8rem 1.1rem;background:var(--surface);border-bottom:.5px solid var(--border);flex-shrink:0;}
+.solo-messages{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:1rem;}
+.smsg{display:flex;gap:8px;max-width:88%;}
+.smsg.user{flex-direction:row-reverse;align-self:flex-end;}
+.smsg.ai{align-self:flex-start;}
+.smsg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface2);border:.5px solid var(--border);}
+.smsg-bubble{padding:11px 15px;border-radius:var(--r-md);font-size:.97rem;line-height:1.6;}
+.smsg.user .smsg-bubble{background:var(--purple);color:#fff;border-bottom-right-radius:3px;}
+.smsg.ai .smsg-bubble{background:var(--surface2);color:var(--text-primary);border:.5px solid var(--border);border-bottom-left-radius:3px;}
+.solo-input-area{padding:.9rem 1.1rem;background:var(--surface);border-top:.5px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;}
+.solo-textarea{flex:1;padding:10px 13px;background:var(--bg);border:.5px solid var(--border-strong);border-radius:var(--r-md);font-family:var(--sans);font-size:.97rem;color:var(--text-primary);outline:none;resize:none;line-height:1.5;min-height:40px;max-height:100px;transition:border-color .15s;}
+.solo-textarea:focus{border-color:var(--purple);}
+.solo-send{width:40px;height:40px;border-radius:50%;background:var(--purple);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;}
+.solo-send:hover{opacity:.8;}
+.solo-send:disabled{opacity:.3;}
+
+/* overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:30;padding:1.5rem;}
+.overlay-card{background:var(--surface);border:.5px solid var(--border-strong);border-radius:var(--r-xl);padding:1.75rem 1.5rem;width:100%;max-width:360px;text-align:center;}
+.overlay-title{font-family:var(--serif);font-size:1.3rem;font-weight:900;color:var(--teal-light);margin-bottom:.4rem;}
+.overlay-sub{font-size:.83rem;color:var(--text-sec);margin-bottom:1.1rem;}
+.score-rows-end{display:flex;flex-direction:column;gap:7px;margin-bottom:1.1rem;}
+.score-row-end{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:var(--surface2);border-radius:var(--r-sm);}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="screen-setup" class="screen active">
+  <div style="margin-bottom:.25rem">
+    <h1 class="game-title">研究探險隊</h1>
+    <p class="game-tagline">小組討論桌遊 · 獨立研究引導</p>
+  </div>
+
+  <!-- stage -->
+  <div class="setup-card">
+    <div class="setup-label">📚 研究階段</div>
+    <div class="stage-pills">
+      <button class="stage-pill active" data-stage="主題訂定" onclick="selStage(this)">主題訂定</button>
+      <button class="stage-pill" data-stage="資料蒐集" onclick="selStage(this)">資料蒐集</button>
+      <button class="stage-pill" data-stage="資料整理" onclick="selStage(this)">資料整理</button>
+      <button class="stage-pill" data-stage="成果發表" onclick="selStage(this)">成果發表</button>
+    </div>
+  </div>
+
+  <!-- players -->
+  <div class="setup-card">
+    <div class="setup-label">👥 玩家姓名（2–3人）</div>
+    <div class="player-inputs" id="player-inputs">
+      <div class="player-row"><div class="player-dot" style="background:#7C6FCD"></div><input class="player-input" placeholder="玩家 1 的名字"></div>
+      <div class="player-row"><div class="player-dot" style="background:#3DBFA0"></div><input class="player-input" placeholder="玩家 2 的名字"></div>
+    </div>
+    <button class="add-player-btn" id="add-player-btn" onclick="addPlayer()">＋ 加入第三位玩家</button>
+  </div>
+
+  <!-- action buttons -->
+  <div class="start-row">
+    <button class="btn-start btn-group" onclick="startGame()">▶ 開始玩</button>
+    <button class="btn-start btn-solo" onclick="startSolo()">💬 獨立討論</button>
+  </div>
+
+  <!-- advanced toggle -->
+  <button class="adv-toggle" onclick="toggleAdv(this)">
+    <span style="font-size:.75rem;letter-spacing:.06em">進階設定（API / AI 風格 / 匯入）</span>
+    <span id="adv-arrow">▼</span>
+  </button>
+  <div class="adv-section" id="adv-section">
+    <!-- api key -->
+    <div class="setup-card">
+      <div class="setup-label">🔑 Gemini API 金鑰（選填）</div>
+      <div class="api-row">
+        <input class="api-input" type="password" id="api-key-input" placeholder="AIza...（不填也可以玩）" autocomplete="off" spellcheck="false">
+        <button class="icon-btn" onclick="toggleKey()">👁</button>
+      </div>
+      <p class="api-hint">金鑰只在瀏覽器中使用。<a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> 免費取得。</p>
+      <p class="api-optional">✦ 不填也可玩，只是無 AI 追問功能</p>
+    </div>
+    <!-- char -->
+    <div class="setup-card">
+      <div class="setup-label">🎭 AI 追問風格</div>
+      <div class="char-grid">
+        <div class="char-pill active" data-char="mentor" onclick="selChar(this)"><span style="font-size:1.2rem">🌱</span><div><div style="font-size:.8rem;font-weight:500">溫柔導師</div><div style="font-size:.68rem;color:var(--text-sec)">鼓勵、引導</div></div></div>
+        <div class="char-pill" data-char="socrates" onclick="selChar(this)"><span style="font-size:1.2rem">🏛</span><div><div style="font-size:.8rem;font-weight:500">蘇格拉底</div><div style="font-size:.68rem;color:var(--text-sec)">只問問題</div></div></div>
+        <div class="char-pill" data-char="peer" onclick="selChar(this)"><span style="font-size:1.2rem">🤝</span><div><div style="font-size:.8rem;font-weight:500">研究夥伴</div><div style="font-size:.68rem;color:var(--text-sec)">輕鬆討論</div></div></div>
+        <div class="char-pill" data-char="critic" onclick="selChar(this)"><span style="font-size:1.2rem">🔍</span><div><div style="font-size:.8rem;font-weight:500">嚴格評審</div><div style="font-size:.68rem;color:var(--text-sec)">挑漏洞</div></div></div>
+      </div>
+    </div>
+    <!-- import -->
+    <div class="setup-card">
+      <div class="setup-label">📥 匯入上次進度（JSON）</div>
+      <div class="import-zone">
+        <textarea class="import-textarea" id="import-json" placeholder='貼上上次匯出的 JSON…'></textarea>
+        <div class="import-btns">
+          <button class="btn-sm btn-sm-outline" onclick="document.getElementById('import-json').value=''">清除</button>
+          <button class="btn-sm btn-sm-fill" onclick="doImport()">匯入並還原</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <button class="back-btn" onclick="pauseToSetup()">←</button>
+    <div class="topbar-info" id="topbar-info"></div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" onclick="doExport()">匯出 💾</button>
+    </div>
+  </div>
+  <div class="players-strip" id="players-strip"></div>
+  <div class="history-strip" id="history-strip"><span class="history-strip-empty">尚無討論紀錄</span></div>
+  <div class="deck-area" id="deck-area"></div>
+</div>
+
+<!-- ══ SOLO ══ -->
+<div id="screen-solo" class="screen">
+  <div class="solo-topbar">
+    <button class="back-btn" onclick="goSetup()">←</button>
+    <span style="font-size:.85rem;flex:1" id="solo-title"></span>
+    <button class="topbar-btn" onclick="soloDrawCard()">換題 🃏</button>
+  </div>
+  <div class="solo-messages" id="solo-messages"></div>
+  <div class="solo-input-area">
+    <textarea class="solo-textarea" id="solo-input" placeholder="輸入你的想法…" onkeydown="soloEnter(event)" oninput="soloResize(this)"></textarea>
+    <button class="solo-send" id="solo-send-btn" onclick="soloSend()">▶</button>
+  </div>
+</div>
+
+<script>
+const PC=["#7C6FCD","#3DBFA0","#F0A843"];
+const GMODEL="gemini-3.1-flash-lite-preview";
+const CARDS={
+  "主題訂定":[
+    {q:"你最近對生活中哪件事最感到好奇？",diff:1},{q:"如果可以選一個問題研究，你最想知道什麼？",diff:1},
+    {q:"這個問題對你的生活有什麼影響？",diff:2},{q:"你認為這個主題對同學有沒有意義？",diff:3},
+    {q:"你能用一句話清楚說明你的研究問題嗎？",diff:3},{q:"這個問題太大還是太小？需要怎麼調整？",diff:2},
+    {q:"這個主題適合用什麼方式研究（觀察、實驗、調查…）？",diff:1},{q:"你想得到的答案能解決什麼實際問題？",diff:2},
+    {q:"如果要用圖片或符號代表這個主題，你會選什麼？",diff:1},{q:"這個研究和你已學過的知識有什麼連結？",diff:1},
+    {q:"這個問題有沒有可能需要分成幾個小問題？",diff:2},{q:"你覺得別人會對這個主題有興趣嗎？為什麼？",diff:1},
+    {q:"你能提出三個和這個主題相關的假設嗎？",diff:2},{q:"這個題目是否太模糊？能否更精準？",diff:3},
+    {q:"你為什麼想研究這個主題？",diff:1},{q:"研究這個主題需要注意什麼倫理問題？",diff:2},
+    {q:"如果換一個角度看，這個主題會變成什麼？",diff:2},{q:"這個研究的潛在價值是什麼？",diff:3},
+    {q:"誰可能會想閱讀你的研究成果？",diff:1},{q:"這個主題和你的個人經驗有什麼關係？",diff:1},
+  ],
+  "資料蒐集":[
+    {q:"你打算從哪裡找到資料（書、網路、訪問…）？",diff:1},{q:"你要怎麼判斷一份資料是否可靠？",diff:2},
+    {q:"哪些資料來源需要特別注意版權或引用？",diff:1},{q:"你蒐集到的資料和你的問題有什麼關聯？",diff:1},
+    {q:"你找到的資料有沒有互相矛盾？",diff:2},{q:"這份資料是事實還是意見？",diff:1},
+    {q:"你需要用什麼關鍵字來搜尋？",diff:1},{q:"你有沒有考慮過從不同角度蒐集資料？",diff:2},
+    {q:"你目前找到的資料夠多嗎？",diff:3},{q:"這份資料是誰寫的？有什麼背景？",diff:2},
+    {q:"你能用一句話摘要一份資料的重點嗎？",diff:3},{q:"這份資料的時間久遠嗎？會影響可信度嗎？",diff:2},
+    {q:"你找到的資料有沒有數據或圖表？",diff:1},{q:"這些數據可靠嗎？",diff:2},
+    {q:"你還需要哪些尚未找到的資料？",diff:3},{q:"你怎麼確認這些資料的真實性？",diff:1},
+    {q:"哪些資料能幫助你支持假設？",diff:1},{q:"哪些資料可能會推翻你的假設？",diff:3},
+    {q:"你會用什麼方式紀錄你找到的資料？",diff:1},{q:"哪一份資料讓你印象最深刻？為什麼？",diff:1},
+  ],
+  "資料整理":[
+    {q:"你要用什麼方法分類資料？",diff:1},{q:"哪些資料和研究問題最相關？",diff:1},
+    {q:"你能用圖表幫助整理資料嗎？",diff:1},{q:"這些資料中出現了哪些相同的觀點？",diff:2},
+    {q:"哪些資料中有不同的觀點？",diff:3},{q:"你能找出其中的矛盾點嗎？",diff:2},
+    {q:"你能從數據中發現什麼趨勢？",diff:2},{q:"你能用一句話說出目前的主要發現嗎？",diff:1},
+    {q:"這些發現能支持你的假設嗎？",diff:2},{q:"這些發現有沒有挑戰到你的假設？",diff:3},
+    {q:"哪些資料需要再查證？",diff:2},{q:"你打算怎麼記錄分析過程？",diff:1},
+    {q:"這些資料能不能用不同方法呈現？",diff:2},{q:"你能找到其中的因果關係嗎？",diff:2},
+    {q:"這些資料有什麼限制？",diff:2},{q:"你能找出資料之間的連結嗎？",diff:3},
+    {q:"哪些資料需要轉換成數字或百分比才好分析？",diff:1},{q:"你能將整理後的資料歸納成三個重點嗎？",diff:2},
+    {q:"這些資料中有沒有啟發出新的問題？",diff:1},{q:"哪些整理好的結果最出乎你意料？",diff:1},
+  ],
+  "成果發表":[
+    {q:"你想用什麼方式發表研究成果（簡報、海報、影片…）？",diff:1},{q:"你的成果發表要面對哪些觀眾？",diff:2},
+    {q:"觀眾最想知道你研究的哪一部分？",diff:3},{q:"你打算怎麼安排發表的順序？",diff:1},
+    {q:"你的研究重點是什麼？",diff:1},{q:"你要怎麼在有限時間內清楚說明？",diff:2},
+    {q:"你的成果展示需要什麼圖片或圖表？",diff:1},{q:"你要怎麼吸引觀眾的注意？",diff:2},
+    {q:"你要怎麼強調你的主要結論？",diff:2},{q:"你的成果要不要提出限制或不足？",diff:3},
+    {q:"你希望觀眾從你的發表中帶走什麼訊息？",diff:3},{q:"你要如何回答觀眾的提問？",diff:1},
+    {q:"你打算如何處理觀眾的不同意見？",diff:2},{q:"你的成果有什麼特別之處？",diff:3},
+    {q:"你能用比喻或故事幫助觀眾理解嗎？",diff:1},{q:"你要如何確保自己的發表清楚有條理？",diff:2},
+    {q:"你要怎麼展現研究過程中的努力？",diff:2},{q:"你覺得成果發表最困難的地方在哪裡？",diff:1},
+    {q:"你希望從觀眾回饋中得到什麼？",diff:1},{q:"完成發表後，你會如何評價自己的表現？",diff:3},
+  ],
+};
+const SPECIALS=[
+  {type:"task",label:"任務卡",emoji:"⚡",q:"小組任務：每位成員說出一個和研究主題相關的生活例子，全員完成才能繼續！",tasks:["成員 1 舉例完成","成員 2 舉例完成","全組達成共識"]},
+  {type:"task",label:"任務卡",emoji:"⚡",q:"小組任務：一起想出三個研究可能遇到的困難，並各自提出一個解決方案。",tasks:["提出三個困難","每人提出解法","記錄在筆記"]},
+  {type:"task",label:"任務卡",emoji:"⚡",q:"小組任務：用 30 秒向組員說明你們的研究目前進展，其他人給予回饋。",tasks:["說明進展（30秒）","其他人給回饋","確認下一步"]},
+  {type:"challenge",label:"挑戰卡",emoji:"🔥",q:"挑戰！下一位玩家必須不看筆記，說出研究主題的三個重點。成功得額外加成！"},
+  {type:"challenge",label:"挑戰卡",emoji:"🔥",q:"挑戰！全組投票：目前研究最大的盲點是什麼？說服其他人你的答案最準確，說服成功得額外加成！"},
+  {type:"skip",label:"跳過卡",emoji:"✨",q:"幸運！這張卡讓你跳過這輪，下一輪從最高難度的卡開始。"},
+];
+const CHAR_PROMPTS={
+  mentor:"你是溫柔的研究導師，語氣溫暖鼓勵，先肯定再追問。",
+  socrates:"你是蘇格拉底，只用反問回應，絕不直接給答案。",
+  peer:"你是研究夥伴，口語輕鬆，可用「欸！」「對耶！」等語氣詞。",
+  critic:"你是嚴格評審，直接指出漏洞，語氣直接但不刻薄。",
+};
+
+let G={stage:"",players:[],idx:0,round:1,scores:[],drawnIds:new Set(),history:[],apiKey:"",charId:"mentor",tasksDone:[],phase:"draw",card:null,pendingScores:[]};
+let soloHistory=[];
+
+/* ── setup helpers ── */
+function selStage(el){el.closest(".stage-pills").querySelectorAll(".stage-pill").forEach(p=>p.classList.remove("active"));el.classList.add("active");}
+function selChar(el){document.querySelectorAll(".char-pill").forEach(p=>p.classList.remove("active"));el.classList.add("active");}
+function toggleKey(){const i=document.getElementById("api-key-input");i.type=i.type==="password"?"text":"password";}
+function toggleAdv(btn){
+  const sec=document.getElementById("adv-section");
+  const arrow=document.getElementById("adv-arrow");
+  const open=sec.classList.toggle("open");
+  arrow.textContent=open?"▲":"▼";
+}
+function addPlayer(){
+  const inp=document.getElementById("player-inputs");
+  const n=inp.querySelectorAll(".player-row").length;
+  if(n>=3)return;
+  const row=document.createElement("div");row.className="player-row";
+  row.innerHTML=`<div class="player-dot" style="background:${PC[n]}"></div><input class="player-input" placeholder="玩家 ${n+1} 的名字">`;
+  inp.appendChild(row);
+  document.getElementById("add-player-btn").style.display="none";
+}
+function getSetupState(){
+  const stage=document.querySelector(".stage-pill.active").dataset.stage;
+  const pInputs=document.querySelectorAll(".player-input");
+  const players=Array.from(pInputs).map((el,i)=>({name:el.value.trim()||`玩家 ${i+1}`,color:PC[i]}));
+  const charEl=document.querySelector(".char-pill.active");
+  return{stage,players,charId:charEl?charEl.dataset.char:"mentor",apiKey:document.getElementById("api-key-input").value.trim()};
+}
+
+/* ── screens ── */
+function showScr(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-"+id).classList.add("active");}
+function goSetup(){showScr("setup");}
+function pauseToSetup(){
+  // Go to setup WITHOUT resetting game state — user can change stage/settings then resume
+  showScr("setup");
+  // Restore current stage pill selection
+  document.querySelectorAll(".stage-pill").forEach(p=>p.classList.toggle("active",p.dataset.stage===G.stage));
+  // Show resume button if game is in progress
+  const existing=document.getElementById("resume-btn-wrap");
+  if(existing)existing.remove();
+  if(G.players.length>0&&G.round<=5){
+    const wrap=document.createElement("div");
+    wrap.id="resume-btn-wrap";
+    wrap.style.cssText="width:100%;max-width:460px;";
+    wrap.innerHTML=`<button class="btn-start" style="width:100%;background:var(--surface);border:.5px solid var(--purple);color:var(--purple-light)" onclick="resumeGame()">↩ 繼續目前遊戲（第 ${G.round} 輪）</button>`;
+    const startRow=document.querySelector(".start-row");
+    if(startRow)startRow.parentNode.insertBefore(wrap,startRow);
+  }
+}
+function resumeGame(){
+  const existing=document.getElementById("resume-btn-wrap");if(existing)existing.remove();
+  // update stage if changed
+  const newStage=document.querySelector(".stage-pill.active").dataset.stage;
+  if(newStage!==G.stage){
+    G.stage=newStage;
+    G.drawnIds.clear();
+    G.phase="draw";G.card=null;
+  }
+  // update api key / char in case changed
+  G.apiKey=document.getElementById("api-key-input").value.trim();
+  const charEl=document.querySelector(".char-pill.active");
+  if(charEl)G.charId=charEl.dataset.char;
+  showScr("game");
+  renderTopbar();renderPlayers();renderHistory();renderDeck();
+}
+
+
+/* ── GAME start ── */
+function startGame(){
+  const s=getSetupState();
+  if(s.players.length<2){alert("請至少輸入 2 位玩家");return;}
+  G={stage:s.stage,players:s.players,idx:0,round:1,scores:s.players.map(()=>0),
+    drawnIds:new Set(),history:[],apiKey:s.apiKey,charId:s.charId,
+    tasksDone:[],phase:"draw",card:null,pendingScores:[]};
+  showScr("game");
+  renderTopbar();renderPlayers();renderHistory();renderDeck();
+}
+
+function renderTopbar(){
+  document.getElementById("topbar-info").textContent=`${G.stage} · 第 ${G.round} 輪`;
+}
+function renderPlayers(){
+  document.getElementById("players-strip").innerHTML=G.players.map((p,i)=>`
+    <div class="player-chip ${i===G.idx?"active-player":""}" style="--player-color:${p.color}">
+      <div class="pip"></div><span>${p.name}</span>
+      <span style="color:${p.color};font-weight:500;margin-left:5px">${G.scores[i]}分</span>
+    </div>`).join("");
+}
+function renderHistory(){
+  const strip=document.getElementById("history-strip");
+  if(!G.history.length){strip.innerHTML='<span class="history-strip-empty">尚無討論紀錄</span>';return;}
+  strip.innerHTML=[...G.history].reverse().map(h=>{
+    const tc=h.type==="task"?"#3DBFA0":h.type==="challenge"?"#F0A843":h.type==="skip"?"#A99FE3":"#A09BBC";
+    const te=h.type==="task"?"⚡":h.type==="challenge"?"🔥":h.type==="skip"?"✨":"💬";
+    const totalPts=h.pts.reduce((a,b)=>a+b,0);
+    return `<div class="hchip">
+      <div class="hchip-top">
+        <span class="hchip-badge" style="background:rgba(255,255,255,.06);color:${tc}">${te}</span>
+        <span class="hchip-who" style="color:${h.color}">${h.player}</span>
+        <span class="hchip-pts" style="color:${tc}">+${totalPts}</span>
+      </div>
+      <div class="hchip-q">${h.q}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ── card logic ── */
+function pickCard(){
+  let pool=CARDS[G.stage].map((c,i)=>({...c,id:i,type:"normal"})).filter(c=>!G.drawnIds.has(c.id));
+  if(!pool.length){G.drawnIds.clear();pool=CARDS[G.stage].map((c,i)=>({...c,id:i,type:"normal"}));}
+  if(Math.random()<0.15&&G.round>1)return{...SPECIALS[Math.floor(Math.random()*SPECIALS.length)],isSpecial:true};
+  const picked=pool[Math.floor(Math.random()*pool.length)];
+  G.drawnIds.add(picked.id);
+  return{...picked};
+}
+
+function renderDeck(){
+  const area=document.getElementById("deck-area");
+  const p=G.players[G.idx];
+  const rem=CARDS[G.stage].length-G.drawnIds.size;
+
+  if(G.phase==="draw"){
+    area.innerHTML=`
+      <div class="flip-wrap clickable" onclick="doFlip()">
+        <div class="deck-shadow s2"></div><div class="deck-shadow s1"></div>
+        <div class="flip-card" id="flip-el">
+          <div class="flip-face flip-back">
+            <div class="flip-back-pat"></div>
+            <div class="flip-back-icon">🃏</div>
+            <div class="flip-back-label">${p.name}，翻牌！</div>
+            <div class="flip-back-sub">剩 ${Math.max(0,rem)} 張 · 含特殊牌</div>
+          </div>
+          <div class="flip-face flip-front" id="flip-front-el" style="min-height:190px"></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if(G.phase==="scoring"){renderScorePicker();return;}
+
+  const card=G.card;
+  const p2=G.players[G.idx];
+  const{badgeBg,badgeColor,badgeLabel}=cardMeta(card);
+  const stars=card.diff?"★".repeat(card.diff)+"☆".repeat(3-card.diff):"";
+  const dc=card.diff===3?"#F0A843":card.diff===2?"#A99FE3":"#5BC47A";
+
+  let actionHTML="";
+  if(card.type==="normal"){
+    actionHTML=`<div class="action-zone">
+      <div class="action-label">✍️ ${p2.name} 的回答</div>
+      <textarea class="answer-textarea" id="ans-input" placeholder="輸入想法，或口頭討論後按完成…" rows="3"></textarea>
+      <div class="btn-row">
+        <button class="btn-s" onclick="skipCard()">略過</button>
+        <button class="btn-p" id="submit-btn" onclick="submitAns()">${G.apiKey?"完成 → AI 追問":"完成討論 →"}</button>
+      </div>
+      <div id="ai-area"></div>
+    </div>`;
+  } else if(card.type==="task"){
+    const its=card.tasks.map((t,i)=>`<div class="task-item" id="ti-${i}" onclick="toggleTask(${i})"><div class="task-cb"></div><span>${t}</span></div>`).join("");
+    actionHTML=`<div class="action-zone">
+      <div class="task-zone"><div class="task-zone-label">小組完成清單</div><div class="task-items">${its}</div></div>
+      <div class="btn-row">
+        <button class="btn-s" onclick="skipCard()">略過任務</button>
+        <button class="btn-p" id="task-btn" onclick="openScoring()" disabled>全部完成 → 評分</button>
+      </div>
+    </div>`;
+  } else if(card.type==="challenge"){
+    actionHTML=`<div class="action-zone">
+      <div class="action-label" style="color:var(--amber-light)">完成挑戰可在評分時加成！</div>
+      <div class="btn-row">
+        <button class="btn-s" onclick="skipCard()">未完成，略過</button>
+        <button class="btn-p" onclick="openScoring()">挑戰成功 → 評分 🎉</button>
+      </div>
+    </div>`;
+  } else {
+    actionHTML=`<div class="action-zone"><button class="btn-p" onclick="skipCard()" style="width:100%">使用跳過卡 →</button></div>`;
+  }
+
+  area.innerHTML=`
+    <div class="flip-wrap" style="cursor:default">
+      <div class="flip-card flipped" style="cursor:default">
+        <div class="flip-face flip-back"><div class="flip-back-pat"></div></div>
+        <div class="flip-face flip-front type-${card.type||"normal"}" style="min-height:190px">
+          <div class="card-badge" style="background:${badgeBg};color:${badgeColor}">${badgeLabel}</div>
+          <div class="card-q">${card.q}</div>
+          ${card.type==="challenge"?`<div style="font-size:.78rem;color:var(--amber-light)">挑戰成功可在評分加成！</div>`:""}
+          <div class="card-footer-row">
+            <span class="card-stage-label">${G.stage}</span>
+            ${stars?`<span class="card-diff" style="color:${dc}">${stars}</span>`:""}
+          </div>
+        </div>
+      </div>
+    </div>
+    ${actionHTML}`;
+}
+
+function cardMeta(card){
+  if(card.type==="task") return{badgeBg:"rgba(61,191,160,.15)",badgeColor:"#3DBFA0",badgeLabel:`⚡ ${card.label}`};
+  if(card.type==="challenge") return{badgeBg:"rgba(240,168,67,.15)",badgeColor:"#F0A843",badgeLabel:`🔥 ${card.label}`};
+  if(card.type==="skip") return{badgeBg:"rgba(124,111,205,.2)",badgeColor:"#A99FE3",badgeLabel:`✨ ${card.label}`};
+  return{badgeBg:"rgba(124,111,205,.15)",badgeColor:"#A99FE3",badgeLabel:"💬 討論卡"};
+}
+
+function doFlip(){
+  const card=pickCard();
+  G.card=card;G.tasksDone=card.tasks?card.tasks.map(()=>false):[];
+  const{badgeBg,badgeColor,badgeLabel}=cardMeta(card);
+  const stars=card.diff?"★".repeat(card.diff)+"☆".repeat(3-card.diff):"";
+  const dc=card.diff===3?"#F0A843":card.diff===2?"#A99FE3":"#5BC47A";
+  const front=document.getElementById("flip-front-el");
+  front.className=`flip-face flip-front type-${card.type||"normal"}`;
+  front.innerHTML=`
+    <div class="card-badge" style="background:${badgeBg};color:${badgeColor}">${badgeLabel}</div>
+    <div class="card-q">${card.q}</div>
+    ${card.type==="challenge"?`<div style="font-size:.78rem;color:var(--amber-light)">挑戰成功可在評分加成！</div>`:""}
+    <div class="card-footer-row">
+      <span class="card-stage-label">${G.stage}</span>
+      ${stars?`<span class="card-diff" style="color:${dc}">${stars}</span>`:""}
+    </div>`;
+  document.querySelector(".flip-wrap").style.cursor="default";
+  setTimeout(()=>{
+    const el=document.getElementById("flip-el");if(el)el.classList.add("flipped");
+    setTimeout(()=>{G.phase="answering";renderDeck();},560);
+  },60);
+}
+
+function toggleTask(i){
+  G.tasksDone[i]=!G.tasksDone[i];
+  const item=document.getElementById("ti-"+i);
+  item.className="task-item"+(G.tasksDone[i]?" done":"");
+  item.querySelector(".task-cb").textContent=G.tasksDone[i]?"✓":"";
+  const allDone=G.tasksDone.every(Boolean);
+  const btn=document.getElementById("task-btn");if(btn)btn.disabled=!allDone;
+}
+
+/* ── scoring ── */
+function openScoring(){G.phase="scoring";renderDeck();}
+
+function renderScorePicker(){
+  const area=document.getElementById("deck-area");
+  const diff=G.card.diff||1;
+  G.pendingScores=G.players.map(()=>null);
+  const stars="★".repeat(diff)+"☆".repeat(3-diff);
+
+  const rows=G.players.map((p,i)=>{
+    const hearts=[1,2,3].map(n=>{
+      const pts=diff*n;
+      return `<button class="heart-btn" id="hb-${i}-${n}" onclick="pickHeart(${i},${n})" title="${n}顆愛心 = ${pts}分">❤️</button>`;
+    }).join("");
+    return `<div class="score-player-row">
+      <span class="score-player-name"><span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block"></span>${p.name}</span>
+      <div class="score-hearts">${hearts}<span class="heart-pts" id="hpts-${i}" style="color:${p.color}">—</span></div>
+    </div>`;
+  }).join("");
+
+  area.innerHTML=`<div class="score-picker">
+    <div class="score-picker-title">這輪討論有多少貢獻？<br><span style="font-size:.7rem;color:var(--text-hint)">難度 ${stars}（${diff}星）· 愛心數 × ${diff} = 得分</span></div>
+    ${rows}
+    <button class="score-confirm" id="score-confirm-btn" onclick="confirmScores()" disabled>確認得分 →</button>
+  </div>`;
+}
+
+function pickHeart(pi,n){
+  const diff=G.card.diff||1;
+  const pts=diff*n;
+  G.pendingScores[pi]=pts;
+  // update hearts: fill up to n, grey the rest
+  [1,2,3].forEach(k=>{
+    const btn=document.getElementById("hb-"+pi+"-"+k);
+    if(btn) btn.className="heart-btn"+(k<=n?" active":"");
+  });
+  const ptsEl=document.getElementById("hpts-"+pi);
+  if(ptsEl) ptsEl.textContent=pts+"分";
+  const allSet=G.pendingScores.every(v=>v!==null);
+  const btn=document.getElementById("score-confirm-btn");
+  if(btn){btn.disabled=!allSet;if(allSet)btn.classList.add("ready");}
+}
+
+function skipCard(){
+  const p=G.players[G.idx];
+  G.history.push({player:p.name,color:p.color,q:G.card.q,type:G.card.type||"normal",pts:G.players.map(()=>0)});
+  G.tasksDone=[];G.phase="draw";
+  G.idx=(G.idx+1)%G.players.length;
+  if(G.idx===0)G.round+=1;
+  if(G.round>5){showEnd();return;}
+  renderTopbar();renderPlayers();renderHistory();renderDeck();
+}
+function confirmScores(){
+  G.pendingScores.forEach((pts,i)=>{if(pts)G.scores[i]+=pts;});
+  const p=G.players[G.idx];
+  G.history.push({player:p.name,color:p.color,q:G.card.q,type:G.card.type||"normal",pts:[...G.pendingScores]});
+  G.tasksDone=[];G.phase="draw";
+  G.idx=(G.idx+1)%G.players.length;
+  if(G.idx===0)G.round+=1;
+  if(G.round>5){showEnd();return;}
+  renderTopbar();renderPlayers();renderHistory();renderDeck();
+}
+
+/* ── AI answer ── */
+async function submitAns(){
+  const ans=(document.getElementById("ans-input")||{}).value||"";
+  const btn=document.getElementById("submit-btn");if(btn)btn.disabled=true;
+  if(!G.apiKey){openScoring();return;}
+  G.scores[G.idx]+=1;
+  const aiArea=document.getElementById("ai-area");
+  if(aiArea)aiArea.innerHTML=`<div class="ai-bubble"><div class="ai-label">AI 追問中…</div><div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>`;
+  const prompt=`${CHAR_PROMPTS[G.charId]||CHAR_PROMPTS.mentor}
+學生正在進行「${G.stage}」討論。題目：「${G.card.q}」學生回答：「${ans||"（口頭）"}」
+請用繁體中文提出一個深入追問（30字以內）。只輸出追問。`;
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent?key=${G.apiKey}`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:80,temperature:.9}}),
+    });
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data?.error?.message);
+    const reply=data?.candidates?.[0]?.content?.parts?.[0]?.text||"能再多說一點嗎？";
+    if(aiArea)aiArea.innerHTML=`
+      <div class="ai-bubble">
+        <div class="ai-label">🤖 AI 追問</div>
+        <div class="ai-text">${esc(reply)}</div>
+      </div>
+      <div class="btn-row" style="margin-top:.75rem">
+        <button class="btn-p" onclick="openScoring()">討論完畢 → 評分</button>
+      </div>`;
+  }catch(e){
+    if(aiArea)aiArea.innerHTML=`<div class="ai-bubble"><div class="ai-label">⚠️ 連線失敗</div><div class="ai-text" style="color:var(--text-sec)">繼續口頭討論後請評分。</div></div>
+      <div class="btn-row" style="margin-top:.75rem"><button class="btn-p" onclick="openScoring()">前往評分 →</button></div>`;
+  }
+}
+
+/* ── end ── */
+function showEnd(){
+  const sorted=[...G.players.map((p,i)=>({...p,score:G.scores[i]}))].sort((a,b)=>b.score-a.score);
+  const ov=document.createElement("div");ov.className="overlay";
+  ov.innerHTML=`<div class="overlay-card">
+    <div class="overlay-title">遊戲結束！🎉</div>
+    <div class="overlay-sub">5 輪討論完成 · 本場積分</div>
+    <div class="score-rows-end">${sorted.map(p=>`
+      <div class="score-row-end">
+        <span style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:${p.color};display:inline-block"></span>${p.name}</span>
+        <span style="font-weight:500;color:${p.color}">${p.score} 分</span>
+      </div>`).join("")}</div>
+    <div class="btn-row">
+      <button class="btn-s" style="flex:1" onclick="this.closest('.overlay').remove();restart()">再玩一局</button>
+      <button class="btn-p" style="flex:1" onclick="this.closest('.overlay').remove();goSetup()">回主選單</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function restart(){
+  G.round=1;G.scores=G.players.map(()=>0);G.idx=0;G.drawnIds.clear();G.history=[];G.phase="draw";G.card=null;G.tasksDone=[];
+  renderTopbar();renderPlayers();renderHistory();renderDeck();
+}
+
+/* ── export / import ── */
+function doExport(){
+  const date=new Date().toISOString().slice(0,10);
+  // JSON
+  const json=JSON.stringify({date,stage:G.stage,players:G.players,scores:G.scores,round:G.round,history:G.history,charId:G.charId},null,2);
+  dl(json,"research-game-"+date+".json","application/json");
+  // CSV
+  const rows=[["日期","玩家","題目","類型","各玩家得分"]];
+  G.history.forEach(h=>{rows.push([date,h.player,h.q,h.type,h.pts.join("|")]);});
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  dl(csv,"research-game-"+date+".csv","text/csv");
+}
+function dl(content,filename,type){
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=filename;a.click();
+}
+function doImport(){
+  try{
+    const raw=document.getElementById("import-json").value.trim();
+    const d=JSON.parse(raw);
+    // restore setup UI
+    document.querySelectorAll(".stage-pill").forEach(p=>p.classList.toggle("active",p.dataset.stage===d.stage));
+    const pInputs=document.querySelectorAll(".player-input");
+    d.players.forEach((p,i)=>{if(pInputs[i])pInputs[i].value=p.name;});
+    // build state and go
+    G={stage:d.stage,players:d.players,idx:0,round:d.round||1,scores:d.scores,
+      drawnIds:new Set(),history:d.history||[],apiKey:document.getElementById("api-key-input").value.trim(),
+      charId:d.charId||"mentor",tasksDone:[],phase:"draw",card:null,pendingScores:[]};
+    showScr("game");renderTopbar();renderPlayers();renderHistory();renderDeck();
+    alert("匯入成功！從第 "+G.round+" 輪繼續。");
+  }catch(e){alert("匯入失敗，請確認 JSON 格式正確。");}
+}
+
+/* ── SOLO mode ── */
+function startSolo(){
+  const s=getSetupState();
+  soloHistory=[];
+  showScr("solo");
+  const charEmoji={mentor:"🌱",socrates:"🏛",peer:"🤝",critic:"🔍"};
+  document.getElementById("solo-title").textContent=`獨立討論 · ${s.stage} · ${charEmoji[s.charId]||"🌱"} ${s.charId==="mentor"?"溫柔導師":s.charId==="socrates"?"蘇格拉底":s.charId==="peer"?"研究夥伴":"嚴格評審"}`;
+  document.getElementById("solo-messages").innerHTML="";
+  soloDrawCard();
+}
+function soloDrawCard(){
+  const s=getSetupState();
+  const pool=CARDS[s.stage];
+  const card=pool[Math.floor(Math.random()*pool.length)];
+  const stars="★".repeat(card.diff)+"☆".repeat(3-card.diff);
+  addSoloMsg("ai",`🃏 <strong>${card.q}</strong><br><span style="font-size:.7rem;color:var(--text-hint)">${stars}</span>`);
+  soloHistory=[{role:"model",parts:[{text:card.q}]}];
+}
+function addSoloMsg(role,html){
+  const msgs=document.getElementById("solo-messages");
+  const div=document.createElement("div");div.className="smsg "+role;
+  const avatar=role==="user"?"👤":"🤖";
+  div.innerHTML=`<div class="smsg-avatar">${avatar}</div><div class="smsg-bubble">${html}</div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function soloEnter(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();soloSend();}}
+function soloResize(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,100)+"px";}
+async function soloSend(){
+  const inp=document.getElementById("solo-input");
+  const text=inp.value.trim();if(!text)return;
+  inp.value="";soloResize(inp);
+  addSoloMsg("user",esc(text));
+  soloHistory.push({role:"user",parts:[{text}]});
+  const s=getSetupState();
+  if(!s.apiKey){addSoloMsg("ai","請在進階設定中輸入 API 金鑰才能使用 AI 追問。");return;}
+  const btn=document.getElementById("solo-send-btn");btn.disabled=true;
+  addSoloMsg("ai",`<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>`);
+  const sys=CHAR_PROMPTS[s.charId]||CHAR_PROMPTS.mentor;
+  try{
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent?key=${s.apiKey}`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({system_instruction:{parts:[{text:sys+"學生正在進行「"+s.stage+"」的獨立研究討論。用繁體中文回應，每次回應不超過80字。"}]},contents:soloHistory,generationConfig:{maxOutputTokens:150,temperature:.85}}),
+    });
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data?.error?.message);
+    const reply=data?.candidates?.[0]?.content?.parts?.[0]?.text||"能再多說一點嗎？";
+    soloHistory.push({role:"model",parts:[{text:reply}]});
+    const msgs=document.getElementById("solo-messages");
+    msgs.lastChild.remove();
+    addSoloMsg("ai",esc(reply).replace(/\n/g,"<br>"));
+  }catch(e){
+    const msgs=document.getElementById("solo-messages");
+    msgs.lastChild.remove();
+    addSoloMsg("ai",`<span style="color:var(--text-hint)">⚠️ 連線失敗：${esc(e.message)}</span>`);
+  }
+  btn.disabled=false;
+}
+
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+</script>
+</body>
+</html>
