@@ -116,6 +116,16 @@
     }
     .title{margin:0;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:.04em}
     .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
+    .readme-btn{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.1);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color:#a7b1c4;font-size:12px;letter-spacing:.06em;
+      white-space:nowrap;transition:.15s ease;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+    }
+    .readme-btn:hover{color:#f6f7fb;border-color:rgba(255,255,255,.2);transform:translateY(-1px)}
     .top-badge{
       padding:8px 12px;border-radius:999px;border:1px solid rgba(196,181,253,.22);
       background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
@@ -290,7 +300,15 @@
             <p class="subtitle">API KEY的應用</p>
           </div>
         </div>
-        <div class="top-badge">2026 eduTool</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <a class="readme-btn" href="https://github.com/sc1137git/eduTool/blob/main/README.md" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor" opacity=".85"/>
+            </svg>
+            說明文件
+          </a>
+          <div class="top-badge">2026 eduTool</div>
+        </div>
       </div>
 
       <div class="toolbar" role="search">
