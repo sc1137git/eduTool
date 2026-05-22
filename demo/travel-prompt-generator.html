@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旅遊 App Prompt 生成器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Sans:wght@400;500&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #3B82F6;
+  --primary-light: #1E2A3A;
+  --primary-mid: #1E3A5F;
+  --accent: #F59E0B;
+  --accent-light: #1C1A10;
+  --success: #10B981;
+  --success-light: #0D2018;
+  --surface: #141414;
+  --surface-2: #1C1C1C;
+  --surface-3: #242424;
+  --border: #2A2A2A;
+  --border-strong: #383838;
+  --text-primary: #F0F0F0;
+  --text-secondary: #A0A0A0;
+  --text-muted: #606060;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans TC', 'DM Sans', sans-serif;
+  background: #0A0A0A;
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.top-bar {
+  background: #1A1A2E;
+  color: white;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-bar-left { display: flex; align-items: center; gap: 10px; }
+.top-bar-icon {
+  width: 32px; height: 32px; background: rgba(255,255,255,0.2);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.top-bar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.top-bar-sub { font-size: 12px; opacity: 0.75; margin-top: 1px; }
+
+.progress-bar {
+  height: 3px; background: rgba(255,255,255,0.25); margin-top: 10px; border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: white; border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.layout { display: flex; min-height: calc(100vh - 72px); }
+
+.sidebar {
+  width: 220px; background: #111111; border-right: 1px solid var(--border);
+  padding: 20px 12px; flex-shrink: 0; position: sticky; top: 72px;
+  height: calc(100vh - 72px); overflow-y: auto;
+}
+
+.sidebar-label {
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+  letter-spacing: 1px; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px;
+}
+
+.step-nav {
+  display: flex; flex-direction: column; gap: 2px; margin-bottom: 20px;
+}
+
+.step-btn {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border-radius: var(--radius-sm); cursor: pointer; border: none;
+  background: transparent; color: var(--text-secondary);
+  font-size: 13px; font-family: inherit; text-align: left; width: 100%;
+  transition: all 0.15s;
+}
+.step-btn:hover { background: var(--surface-3); color: var(--text-primary); }
+.step-btn.active { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+.step-btn.done { color: var(--success); }
+.step-btn.done .step-num { background: var(--success); color: white; }
+
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--surface-3); color: var(--text-muted);
+  font-size: 11px; font-weight: 700; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.step-btn.active .step-num { background: var(--primary); color: white; }
+
+.main { flex: 1; padding: 28px 32px; max-width: 820px; }
+
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+.panel-header { margin-bottom: 24px; }
+.panel-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-light); color: var(--primary);
+  font-size: 11px; font-weight: 700; padding: 4px 10px;
+  border-radius: 20px; margin-bottom: 8px; letter-spacing: 0.3px;
+}
+.panel-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.panel-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+.form-section {
+  background: #111111; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
+}
+.form-section-title {
+  font-size: 13px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.form-section-icon {
+  width: 28px; height: 28px; background: var(--primary-light);
+  border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 5px;
+}
+.field-hint {
+  font-size: 11px; color: var(--text-muted); margin-bottom: 5px; font-weight: 400;
+}
+.field input, .field textarea, .field select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;
+  color: var(--text-primary); background: var(--surface-2);
+  transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+  appearance: none; color-scheme: dark;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  background: var(--surface-3);
+}
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.field input::placeholder, .field textarea::placeholder { color: var(--text-muted); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.color-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.color-chip {
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.color-chip:hover { transform: scale(1.1); }
+.color-chip.selected { border-color: var(--text-primary); transform: scale(1.1); }
+.color-chip-label { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.style-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.style-option {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 8px; text-align: center; cursor: pointer;
+  transition: all 0.15s; background: var(--surface-2); color: var(--text-primary);
+}
+.style-option:hover { border-color: var(--primary); background: var(--surface-3); }
+.style-option.selected { border-color: var(--primary); background: var(--primary-light); color: var(--text-primary); }
+.style-option .style-icon { font-size: 20px; margin-bottom: 4px; }
+.style-option .style-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.style-option .style-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.style-option.selected .style-name { color: var(--primary); }
+
+.day-blocks { display: flex; flex-direction: column; gap: 10px; }
+.day-block {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.day-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--surface-3); cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  user-select: none;
+}
+.day-header:hover { background: var(--surface-3); color: var(--primary); }
+.day-body { padding: 14px; display: none; background: white; }
+.day-body.open { display: block; }
+.day-arrow { transition: transform 0.2s; font-size: 12px; color: var(--text-muted); }
+.day-header.open .day-arrow { transform: rotate(180deg); }
+
+.tag-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tag-toggle {
+  padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  border: 1.5px solid var(--border); background: var(--surface-2);
+  color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.tag-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.tag-toggle.on { background: var(--primary); color: white; border-color: var(--primary); }
+
+.prompt-output {
+  background: #0D0D0D; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px;
+  margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.prompt-output-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.prompt-output-label {
+  font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.prompt-num-badge {
+  background: var(--primary); color: white; font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+.prompt-text {
+  font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.75;
+  color: #E2E8F0; white-space: pre-wrap; word-break: break-word;
+}
+.prompt-text .ph {
+  background: rgba(245, 158, 11, 0.2); color: #FCD34D;
+  border-radius: 3px; padding: 0 2px;
+}
+.copy-btn {
+  display: flex; align-items: center; gap: 7px; padding: 10px 18px;
+  background: var(--primary); color: white; border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: all 0.15s; width: 100%; justify-content: center; margin-top: 10px;
+}
+.copy-btn:hover { background: #1D4ED8; }
+.copy-btn.done { background: var(--success); }
+
+.nav-buttons {
+  display: flex; gap: 10px; margin-top: 28px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.btn {
+  padding: 11px 22px; border-radius: var(--radius-sm); font-size: 14px;
+  font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 7px; border: 1.5px solid transparent;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #1D4ED8; }
+.btn-secondary { background: var(--surface-2); color: var(--text-primary); border-color: var(--border-strong); }
+.btn-secondary:hover { background: var(--surface-3); color: var(--text-primary); }
+
+.welcome-hero {
+  background: #0D1520;
+  border: 1px solid #1E3A5F; border-radius: var(--radius-lg);
+  padding: 28px; margin-bottom: 24px; text-align: center;
+}
+.welcome-hero h1 { font-size: 26px; font-weight: 800; color: #60A5FA; margin-bottom: 8px; }
+.welcome-hero p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+.step-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+.step-chip {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: white; border: 1px solid var(--border); border-radius: 20px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.step-chip-num { font-weight: 700; color: var(--primary); }
+
+.tip-box {
+  background: #1C1800; border: 1px solid #3D3000;
+  border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 12px;
+  font-size: 12.5px; color: #D4A017; line-height: 1.6;
+}
+.tip-box strong { font-weight: 700; }
+
+.checklist { display: flex; flex-direction: column; gap: 6px; }
+.check-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-3); font-size: 13px; cursor: pointer;
+  transition: all 0.15s; user-select: none;
+}
+.check-item:hover { background: var(--surface-3); border-color: var(--primary); }
+.check-item.checked { background: var(--success-light); border-color: #6EE7B7; color: #065F46; }
+.check-box {
+  width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.15s;
+}
+.check-item.checked .check-box { background: var(--success); border-color: var(--success); color: white; }
+
+.info-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--primary-light); color: var(--primary);
+  font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 6px;
+}
+
+.done-banner {
+  background: #0A1F15; border: 1.5px solid #1A4D30;
+  border-radius: var(--radius-lg); padding: 20px; text-align: center; margin-bottom: 20px;
+}
+.done-banner h3 { font-size: 18px; font-weight: 700; color: #34D399; margin-bottom: 6px; }
+.done-banner p { font-size: 13px; color: #6EE7B7; }
+
+.all-prompts-area { display: flex; flex-direction: column; gap: 16px; }
+
+input[type="color"] {
+  width: 40px; height: 40px; padding: 2px; border-radius: 8px;
+  border: 1.5px solid var(--border-strong); cursor: pointer; background: none;
+}
+.mode-btn {
+  padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13px;
+  font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s;
+  border: 1.5px solid var(--border-strong); background: var(--surface-2);
+  color: var(--text-secondary);
+}
+.mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.mode-btn:hover:not(.active) { background: var(--surface-3); color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-bar-icon">✈️</div>
+    <div>
+      <div class="top-bar-title">旅遊 App Prompt 生成器</div>
+      <div class="top-bar-sub">講師工作坊專用工具 — 填空版</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.7)">步驟 <span id="cur-step-label">0</span> / 5</div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-label">步驟流程</div>
+    <div class="step-nav">
+      <button class="step-btn active" onclick="goStep(0)" id="nav-0">
+        <span class="step-num">0</span> 開始
+      </button>
+      <button class="step-btn" onclick="goStep(1)" id="nav-1">
+        <span class="step-num">1</span> 基本資訊
+      </button>
+      <button class="step-btn" onclick="goStep(2)" id="nav-2">
+        <span class="step-num">2</span> 視覺風格
+      </button>
+      <button class="step-btn" onclick="goStep(3)" id="nav-3">
+        <span class="step-num">3</span> 行程天數
+      </button>
+      <button class="step-btn" onclick="goStep(4)" id="nav-4">
+        <span class="step-num">4</span> 功能選項
+      </button>
+      <button class="step-btn" onclick="goStep(5)" id="nav-5">
+        <span class="step-num">5</span> 產生 Prompt
+      </button>
+    </div>
+
+    <div class="sidebar-label" style="margin-top:8px">填寫進度</div>
+    <div class="checklist" id="sidebar-checklist">
+      <div class="check-item" id="chk-dest" onclick="goStep(1)" style="cursor:pointer" title="前往填寫"><span class="check-box"></span> 旅遊地點</div>
+      <div class="check-item" id="chk-dates" onclick="goStep(1)" style="cursor:pointer" title="前往填寫"><span class="check-box"></span> 日期</div>
+      <div class="check-item" id="chk-style" onclick="goStep(2)" style="cursor:pointer" title="前往填寫"><span class="check-box"></span> 視覺風格</div>
+      <div class="check-item" id="chk-days" onclick="goStep(3)" style="cursor:pointer" title="前往填寫"><span class="check-box"></span> 行程</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- STEP 0: 歡迎 -->
+    <div class="step-panel active" id="step-0">
+      <div class="welcome-hero">
+        <div style="font-size:36px;margin-bottom:10px">✈️ 🏔️ 🗺️</div>
+        <h1>旅遊 App Prompt 生成器</h1>
+        <p>填入你的旅遊資訊，自動生成可以直接貼進 Gemini 的 Prompt。<br>完成後你將獲得 <strong>5 組完整的設計 Prompt</strong>，讓 AI 幫你打造專屬旅遊 App。</p>
+        <div class="step-chips">
+          <div class="step-chip"><span class="step-chip-num">1</span> 填寫旅遊基本資訊</div>
+          <div class="step-chip"><span class="step-chip-num">2</span> 選擇視覺風格</div>
+          <div class="step-chip"><span class="step-chip-num">3</span> 輸入每天行程</div>
+          <div class="step-chip"><span class="step-chip-num">4</span> 選擇 App 功能</div>
+          <div class="step-chip"><span class="step-chip-num">5</span> 一鍵複製 Prompt</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="form-section-icon">📋</div> 使用說明
+        </div>
+        <div class="checklist">
+          <div class="check-item">
+            <div class="check-box" style="background:var(--primary);border-color:var(--primary);color:white">1</div>
+            依序填寫每個步驟的欄位（約 5～10 分鐘）
+          </div>
+          <div class="check-item">
+            <div class="check-box" style="background:var(--primary);border-color:var(--primary);color:white">2</div>
+            到「產生 Prompt」頁面複製 Prompt
+          </div>
+          <div class="check-item">
+            <div class="check-box" style="background:var(--primary);border-color:var(--primary);color:white">3</div>
+            依序貼到 Gemini，一次貼一個 Prompt
+          </div>
+          <div class="check-item">
+            <div class="check-box" style="background:var(--primary);border-color:var(--primary);color:white">4</div>
+            Gemini 回覆後繼續貼下一個 Prompt
+          </div>
+        </div>
+        <div class="tip-box" style="margin-top:14px">
+          <strong>💡 講師提示：</strong> 鼓勵學員先規劃好自己的行程再開始填寫。沒有真實行程也可以使用範例資料練習。
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-primary" onclick="goStep(1)">開始填寫 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 1: 基本資訊 -->
+    <div class="step-panel" id="step-1">
+      <div class="panel-header">
+        <div class="panel-tag">步驟 1 / 5</div>
+        <div class="panel-title">旅遊基本資訊</div>
+        <div class="panel-desc">填寫你的旅遊主題、日期和主要城市，這些資訊會自動帶入所有 Prompt 中。</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🗺️</div> 旅遊資訊</div>
+        <div class="field">
+          <label>旅遊主題名稱</label>
+          <div class="field-hint">例：黑部立山・金澤・名古屋 7 日自由行</div>
+          <input type="text" id="f-title" placeholder="輸入你的旅遊主題" oninput="updatePreview()">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>出發日期</label>
+            <input type="date" id="f-start" oninput="updatePreview()">
+          </div>
+          <div class="field">
+            <label>回程日期</label>
+            <input type="date" id="f-end" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="field">
+          <label>主要旅遊城市</label>
+          <div class="field-hint">用逗號分隔，例：名古屋, 金澤, 富山, 立山</div>
+          <input type="text" id="f-cities" placeholder="填入主要城市" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>出發地 / 回程機場</label>
+          <div class="field-hint">例：台北桃園國際機場（TPE）→ 中部國際機場（NGO）</div>
+          <input type="text" id="f-airport" placeholder="出發 → 抵達機場" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>旅遊人數</label>
+          <div class="field-row" style="margin-top:4px">
+            <input type="number" id="f-pax" placeholder="人數" min="1" max="20" value="2" oninput="updatePreview()">
+            <select id="f-type" oninput="updatePreview()">
+              <option value="自由行">自由行</option>
+              <option value="跟團">跟團</option>
+              <option value="半自助">半自助</option>
+              <option value="蜜月旅行">蜜月旅行</option>
+              <option value="家庭旅遊">家庭旅遊</option>
+              <option value="親子旅遊">親子旅遊</option>
+              <option value="學生旅遊">學生旅遊</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>特殊需求 / 備注</label>
+          <div class="field-hint">例：有小孩、行動不便者、素食需求、高山症預防等</div>
+          <textarea id="f-special" placeholder="（選填）輸入特殊需求" rows="2" oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(0)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(2)">下一步：視覺風格 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: 視覺風格 -->
+    <div class="step-panel" id="step-2">
+      <div class="panel-header">
+        <div class="panel-tag">步驟 2 / 5</div>
+        <div class="panel-title">視覺風格設定</div>
+        <div class="panel-desc">選擇你的 App 風格，這決定了整體顏色、字體和設計感。</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🎨</div> 選擇風格</div>
+        <div class="style-options" id="style-options">
+          <div class="style-option selected" onclick="selectStyle(this,'日式清新','日式圓角卡片、柔和配色、Zen Maru Gothic','#2B6CB0,#C9A84C,#F7F9FC','Zen Maru Gothic + Noto Sans TC')">
+            <div class="style-icon">🌸</div>
+            <div class="style-name">日式清新</div>
+            <div class="style-desc">圓角・柔和・清爽</div>
+          </div>
+          <div class="style-option" onclick="selectStyle(this,'北歐極簡','大量留白、無襯線字體、黑白灰主調','#1C1C1E,#F5F5F5,#E5E5EA','Inter + Noto Sans TC')">
+            <div class="style-icon">❄️</div>
+            <div class="style-name">北歐極簡</div>
+            <div class="style-desc">留白・清冷・俐落</div>
+          </div>
+          <div class="style-option" onclick="selectStyle(this,'熱帶活力','鮮豔配色、大膽排版、充滿活力','#FF6B6B,#FFE66D,#4ECDC4','Pacifico + Noto Sans TC')">
+            <div class="style-icon">🌺</div>
+            <div class="style-name">熱帶活力</div>
+            <div class="style-desc">鮮豔・活力・大膽</div>
+          </div>
+          <div class="style-option" onclick="selectStyle(this,'復古旅行','牛皮紙色調、印章風格、復古地圖感','#8B4513,#F4E4C1,#2C3E50','Playfair Display + Noto Sans TC')">
+            <div class="style-icon">🧭</div>
+            <div class="style-name">復古旅行</div>
+            <div class="style-desc">牛皮紙・印章・地圖</div>
+          </div>
+          <div class="style-option" onclick="selectStyle(this,'夜間暗色','深色背景、螢光重點色、科技感','#0A0A0A,#7C3AED,#10B981','Space Grotesk + Noto Sans TC')">
+            <div class="style-icon">🌙</div>
+            <div class="style-name">夜間暗色</div>
+            <div class="style-desc">深色・螢光・科技感</div>
+          </div>
+          <div class="style-option" onclick="selectStyle(this,'自訂風格','自行輸入配色和字體說明','#2563EB,#F59E0B,#FFFFFF','自訂')">
+            <div class="style-icon">✏️</div>
+            <div class="style-name">自訂風格</div>
+            <div class="style-desc">自行設定</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🖌️</div> 配色設定</div>
+        <div class="field">
+          <label>主色（Primary Color）</label>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <input type="color" id="f-color1" value="#2B6CB0" oninput="updatePreview()">
+            <input type="text" id="f-color1-hex" value="#2B6CB0" style="width:110px" oninput="syncColor('f-color1','f-color1-hex')">
+            <span style="font-size:12px;color:var(--text-muted)">例：#2B6CB0（立山藍）</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>副色（Accent Color）</label>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <input type="color" id="f-color2" value="#C9A84C" oninput="updatePreview()">
+            <input type="text" id="f-color2-hex" value="#C9A84C" style="width:110px" oninput="syncColor('f-color2','f-color2-hex')">
+            <span style="font-size:12px;color:var(--text-muted)">例：#C9A84C（金澤金）</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>背景色</label>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <input type="color" id="f-color3" value="#F7F9FC" oninput="updatePreview()">
+            <input type="text" id="f-color3-hex" value="#F7F9FC" style="width:110px" oninput="syncColor('f-color3','f-color3-hex')">
+            <span style="font-size:12px;color:var(--text-muted)">例：#F7F9FC（雪白）</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>字體說明</label>
+          <div class="field-hint">選擇風格後會自動填入，也可以手動修改</div>
+          <input type="text" id="f-font" value="Zen Maru Gothic + Noto Sans TC" placeholder="字體名稱" oninput="updatePreview()">
+        </div>
+        <div class="field">
+          <label>補充風格說明</label>
+          <div class="field-hint">例：底部浮動導覽、圓角16px、卡片陰影效果</div>
+          <textarea id="f-style-extra" rows="2" placeholder="其他視覺設計要求（選填）" oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(1)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(3)">下一步：填寫行程 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: 行程 -->
+    <div class="step-panel" id="step-3">
+      <div class="panel-header">
+        <div class="panel-tag">步驟 3 / 5</div>
+        <div class="panel-title">行程內容</div>
+        <div class="panel-desc">直接把你已規劃好的行程貼進來，或切換到逐天填寫模式。</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">📋</div> 輸入方式</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="mode-btn active" id="mode-paste-btn" onclick="switchMode('paste')">📋 直接貼上行程</button>
+          <button class="mode-btn" id="mode-manual-btn" onclick="switchMode('manual')">✏️ 逐天填寫</button>
+        </div>
+
+        <!-- 貼上模式 -->
+        <div id="mode-paste">
+          <div class="field">
+            <label>把行程表直接貼進來</label>
+            <div class="field-hint">支援任何格式：Excel 複製、Google 試算表、文字檔、手打的都可以</div>
+            <textarea id="f-itinerary-paste" rows="16" placeholder="把行程直接貼在這裡，任何格式都 OK ↓
+
+【範例：山富旅遊 北陸黑部立山5日】
+
+第1天 桃園→名古屋→木曾馬籠宿
+台灣出發，搭機抵達名古屋中部國際機場，接機後前往木曾馬籠宿，參觀米其林3星古宿場町，石疊老街充滿江戶風情。晚間入住飯店。
+
+第2天 馬籠宿→上高地→立山
+清晨前往神明降臨的絕美秘境-上高地（海拔1500m），欣賞梓川清流與穗高連峰美景，下午驅車前往立山區域，準備明日穿越行程。
+
+第3天 立山黑部阿爾卑斯山脈穿越
+今日全日體驗立山黑部阿爾卑斯山脈穿越，搭乘多種交通工具：立山纜車→高原巴士→室堂（雪牆絕景 2450m）→黑部平→黑部湖→黑部水壩→扇澤，壯闊雪牆高達20公尺！
+
+第4天 富山→新湊→金澤
+早餐後前往新湊きっときと市場，參觀達人競標螃蟹實況見學，並品嘗一人一整隻松葉蟹豐富御膳。下午前往金澤，參觀日本三大名園之首-兼六園，漫步東茶屋街。
+
+第5天 金澤→白川鄉→名古屋→台灣
+早餐後前往聯合國教科文組織世界遺產-白川鄉合掌村，欣賞童話般的茅草屋聚落。下午驅車返回名古屋，搭機返回台灣，結束美好旅程。
+
+---
+💡 你可以貼任何格式的行程，例如：旅行社PDF內容、KKday/Klook行程說明、自己規劃的Google文件、Excel表格複製" oninput="syncPasteToManual(); updatePreview();"></textarea>
+          </div>
+          <div class="tip-box">
+            <strong>💡 從旅遊網站複製行程的方法：</strong><br>
+            1. 在旅遊社網站（山富、可樂、雄獅等）找到每日行程說明<br>
+            2. 用滑鼠框選所有行程文字（Ctrl+A 或手動框選）<br>
+            3. Ctrl+C 複製，再 Ctrl+V 貼到上方文字框<br>
+            格式不整齊沒關係，Gemini 都看得懂！
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button onclick="loadExample()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-secondary);font-size:12px;font-family:inherit;cursor:pointer">📋 載入範例行程</button>
+            <button onclick="clearItinerary()" style="padding:7px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-secondary);font-size:12px;font-family:inherit;cursor:pointer">🗑 清空</button>
+          </div>
+        </div>
+
+        <!-- 逐天模式 -->
+        <div id="mode-manual" style="display:none">
+          <div class="field" style="margin-bottom:14px">
+            <label>總天數</label>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="range" min="2" max="14" value="7" id="f-days" style="flex:1" oninput="rebuildDays()">
+              <span style="font-size:20px;font-weight:700;color:var(--primary);min-width:40px" id="days-label">7 天</span>
+            </div>
+          </div>
+          <div class="day-blocks" id="day-blocks"></div>
+        </div>
+      </div>
+
+      <div class="tip-box" style="margin-top:4px">
+        <strong>💡 提示：</strong> 沒有行程也沒關係，可以只填城市名稱，Gemini 會根據地名推薦景點。
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(2)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(4)">下一步：功能選項 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: 功能選項 -->
+    <div class="step-panel" id="step-4">
+      <div class="panel-header">
+        <div class="panel-tag">步驟 4 / 5</div>
+        <div class="panel-title">App 功能選項</div>
+        <div class="panel-desc">選擇你想要在旅遊 App 中包含的功能模組。</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🗓️</div> 行程頁功能</div>
+        <div class="tag-group" id="tags-itinerary">
+          <span class="tag-toggle on" data-val="景點卡片（分類圖示+名稱+說明）">景點卡片</span>
+          <span class="tag-toggle on" data-val="必吃/必買/必拍彩色標籤">必吃必拍標籤</span>
+          <span class="tag-toggle on" data-val="Google Maps 導航按鈕">Google Maps</span>
+          <span class="tag-toggle on" data-val="交通時刻資訊">交通時刻</span>
+          <span class="tag-toggle on" data-val="穿搭建議卡">穿搭建議</span>
+          <span class="tag-toggle" data-val="拍照小技巧區塊">拍照技巧</span>
+          <span class="tag-toggle" data-val="旅記照片上傳功能">旅記上傳</span>
+          <span class="tag-toggle" data-val="每日預算計算">預算計算</span>
+          <span class="tag-toggle" data-val="景點收藏（加入書籤）">景點收藏</span>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">📖</div> 指南頁功能</div>
+        <div class="tag-group" id="tags-guide">
+          <span class="tag-toggle on" data-val="行李打包清單（可勾選新增刪除）">打包清單</span>
+          <span class="tag-toggle on" data-val="旅遊規範提醒（摺疊式）">旅遊規範</span>
+          <span class="tag-toggle on" data-val="緊急聯絡資訊">緊急資訊</span>
+          <span class="tag-toggle on" data-val="訂單管理（航班/飯店/票券）">訂單管理</span>
+          <span class="tag-toggle" data-val="常用日文會話">日文會話</span>
+          <span class="tag-toggle" data-val="匯率換算工具">匯率換算</span>
+          <span class="tag-toggle" data-val="當地 SIM 卡/網路資訊">網路資訊</span>
+          <span class="tag-toggle" data-val="常用 App 推薦清單">App 推薦</span>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🌤️</div> 天氣頁功能</div>
+        <div class="tag-group" id="tags-weather">
+          <span class="tag-toggle on" data-val="7天天氣總覽橫列">天氣總覽</span>
+          <span class="tag-toggle on" data-val="每日氣溫+降雨機率">每日氣溫</span>
+          <span class="tag-toggle on" data-val="穿搭建議（每日更新）">每日穿搭</span>
+          <span class="tag-toggle" data-val="城市地圖示意圖">城市地圖</span>
+          <span class="tag-toggle" data-val="體感溫度顯示">體感溫度</span>
+          <span class="tag-toggle" data-val="特殊天氣提醒（高山/颱風）">特殊提醒</span>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><div class="form-section-icon">🎯</div> 目標國家</div>
+        <div class="field">
+          <label>旅遊國家（影響規範提醒內容）</label>
+          <select id="f-country" oninput="updatePreview()">
+            <option value="日本">🇯🇵 日本</option>
+            <option value="韓國">🇰🇷 韓國</option>
+            <option value="泰國">🇹🇭 泰國</option>
+            <option value="法國">🇫🇷 法國</option>
+            <option value="義大利">🇮🇹 義大利</option>
+            <option value="美國">🇺🇸 美國</option>
+            <option value="英國">🇬🇧 英國</option>
+            <option value="澳洲">🇦🇺 澳洲</option>
+            <option value="其他">🌍 其他</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(3)">← 上一步</button>
+        <button class="btn btn-primary" onclick="goStep(5)">產生 Prompt ✨</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: 產生 Prompt -->
+    <div class="step-panel" id="step-5">
+      <div class="panel-header">
+        <div class="panel-tag">完成！</div>
+        <div class="panel-title">你的專屬 Prompt</div>
+        <div class="panel-desc">依序複製每個 Prompt，貼到 Gemini 對話框，等 Gemini 回覆後再貼下一個。</div>
+      </div>
+
+      <div class="done-banner">
+        <h3>🎉 Prompt 已生成完畢</h3>
+        <p>共 5 組 Prompt，依序貼入 Gemini 即可完成你的旅遊 App 設計</p>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <button class="copy-btn" style="background:#0F172A;width:auto;display:inline-flex;gap:8px" onclick="copyAll()">
+          📋 一次複製全部 5 個 Prompt
+        </button>
+      </div>
+
+      <div class="all-prompts-area" id="prompts-output"></div>
+
+      <div class="nav-buttons" style="margin-top:28px">
+        <button class="btn btn-secondary" onclick="goStep(4)">← 返回修改</button>
+        <button class="btn btn-primary" onclick="regenerate()">🔄 重新生成</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentStep = 0;
+let selectedStyle = { name:'日式清新', desc:'日式圓角卡片、柔和配色', colors:'#2B6CB0,#C9A84C,#F7F9FC', font:'Zen Maru Gothic + Noto Sans TC' };
+let dayCount = 7;
+let dayData = [];
+let inputMode = 'paste';
+
+function switchMode(mode) {
+  inputMode = mode;
+  document.getElementById('mode-paste').style.display = mode === 'paste' ? 'block' : 'none';
+  document.getElementById('mode-manual').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('mode-paste-btn').classList.toggle('active', mode === 'paste');
+  document.getElementById('mode-manual-btn').classList.toggle('active', mode === 'manual');
+}
+
+function syncPasteToManual() {}
+
+function clearItinerary() {
+  const el = document.getElementById('f-itinerary-paste');
+  if(el) el.value = '';
+}
+
+function loadExample() {
+  const example = `【山富旅遊｜北陸黑部立山雪牆‧黑部峽谷名古屋5日】
+
+第1天｜桃園 → 名古屋 → 木曾馬籠宿
+搭機抵達名古屋中部國際機場，前往木曾馬籠宿
+・木曾馬籠宿（米其林綠色指南3星）：江戶時期古宿場町，石疊老街保存完好
+・晚間入住馬籠宿或周邊飯店
+
+第2天｜馬籠宿 → 上高地 → 立山
+・上高地（海拔1500m）：梓川清流、穗高連峰，神明降臨的絕美秘境
+  ※氣溫比平地低5~10度，注意保暖
+・下午驅車前往立山區域
+
+第3天｜立山黑部阿爾卑斯山脈穿越
+多種交通工具體驗：
+・立山纜車 → 高原巴士 → 室堂（雪牆高達20公尺，海拔2450m）
+・黑部平 → 黑部湖 → 黑部水壩 → 扇澤
+・晚間抵達富山
+
+第4天｜富山 → 新湊 → 金澤
+・新湊きっときと市場：達人競標螃蟹實況見學 + 一人一整隻松葉蟹御膳
+  ※若遇休市仍可品嘗松葉蟹御膳
+・金澤兼六園（日本三大名園之首）
+・東茶屋街：金澤最著名的茶屋建築保存區
+・晚間住金澤
+
+第5天｜金澤 → 白川鄉 → 名古屋 → 台灣
+・白川鄉合掌村（UNESCO世界遺產）：茅草屋聚落，四季皆美
+・驅車返回名古屋中部國際機場
+・搭機返台，結束北陸黑部立山之旅`;
+  const el = document.getElementById('f-itinerary-paste');
+  if(el) el.value = example;
+  updatePreview();
+}
+
+function goStep(n) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.querySelectorAll('.step-btn').forEach((b,i) => {
+    b.classList.remove('active');
+    if(i === n) b.classList.add('active');
+  });
+  currentStep = n;
+  document.getElementById('cur-step-label').textContent = n;
+  if(n === 5) generatePrompts();
+  window.scrollTo(0,0);
+}
+
+function selectStyle(el, name, desc, colors, font) {
+  document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedStyle = { name, desc, colors, font };
+  const [c1, c2, c3] = colors.split(',');
+  if(c1) { document.getElementById('f-color1').value = c1; document.getElementById('f-color1-hex').value = c1; }
+  if(c2) { document.getElementById('f-color2').value = c2; document.getElementById('f-color2-hex').value = c2; }
+  if(c3) { document.getElementById('f-color3').value = c3; document.getElementById('f-color3-hex').value = c3; }
+  document.getElementById('f-font').value = font;
+}
+
+function syncColor(colorId, hexId) {
+  const hex = document.getElementById(hexId).value;
+  if(/^#[0-9A-Fa-f]{6}$/.test(hex)) document.getElementById(colorId).value = hex;
+}
+
+document.getElementById('f-color1').addEventListener('input', function() {
+  document.getElementById('f-color1-hex').value = this.value;
+});
+document.getElementById('f-color2').addEventListener('input', function() {
+  document.getElementById('f-color2-hex').value = this.value;
+});
+document.getElementById('f-color3').addEventListener('input', function() {
+  document.getElementById('f-color3-hex').value = this.value;
+});
+
+function rebuildDays() {
+  dayCount = parseInt(document.getElementById('f-days').value);
+  document.getElementById('days-label').textContent = dayCount + ' 天';
+  const container = document.getElementById('day-blocks');
+  while(dayData.length < dayCount) dayData.push({ spots:'', transport:'', stay:'', note:'' });
+  container.innerHTML = '';
+  for(let i=0; i<dayCount; i++) {
+    const d = i+1;
+    const block = document.createElement('div');
+    block.className = 'day-block';
+    block.innerHTML = `
+      <div class="day-header" id="dh-${i}" onclick="toggleDay(${i})">
+        <span>D${d} ・ 第 ${d} 天</span>
+        <span class="day-arrow">▼</span>
+      </div>
+      <div class="day-body" id="db-${i}">
+        <div class="field">
+          <label>景點 / 活動</label>
+          <div class="field-hint">用逗號或換行分隔，例：松本城, 松本市區午餐, 信濃大町</div>
+          <textarea id="d${i}-spots" rows="2" placeholder="輸入當日景點、活動、餐廳..." oninput="saveDay(${i})">${dayData[i].spots}</textarea>
+        </div>
+        <div class="field">
+          <label>交通方式</label>
+          <div class="field-hint">例：名古屋→(JR特急)松本（約2小時）</div>
+          <textarea id="d${i}-transport" rows="2" placeholder="填入當日交通（路線、票種、時間）..." oninput="saveDay(${i})">${dayData[i].transport}</textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>住宿城市</label>
+            <input type="text" id="d${i}-stay" placeholder="例：金澤" oninput="saveDay(${i})" value="${dayData[i].stay}">
+          </div>
+          <div class="field">
+            <label>特別備注</label>
+            <input type="text" id="d${i}-note" placeholder="例：北陸JR PASS" oninput="saveDay(${i})" value="${dayData[i].note}">
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(block);
+  }
+  if(dayCount > 0) toggleDay(0);
+  updatePreview();
+}
+
+function toggleDay(i) {
+  const body = document.getElementById('db-' + i);
+  const header = document.getElementById('dh-' + i);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+}
+
+function saveDay(i) {
+  dayData[i] = {
+    spots: document.getElementById('d'+i+'-spots')?.value || '',
+    transport: document.getElementById('d'+i+'-transport')?.value || '',
+    stay: document.getElementById('d'+i+'-stay')?.value || '',
+    note: document.getElementById('d'+i+'-note')?.value || ''
+  };
+  updatePreview();
+}
+
+function getTagValues(containerId) {
+  return Array.from(document.querySelectorAll('#'+containerId+' .tag-toggle.on'))
+    .map(t => t.dataset.val).join('、');
+}
+
+function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function buildItineraryText() {
+  if(inputMode === 'paste') {
+    return (document.getElementById('f-itinerary-paste')?.value || '').trim();
+  }
+  let text = '';
+  for(let i=0; i<dayCount; i++) {
+    saveDay(i);
+    const d = dayData[i];
+    if(!d.spots && !d.transport) continue;
+    text += `D${i+1}`;
+    if(d.note) text += `（${d.note}）`;
+    text += '：\n';
+    if(d.transport) text += `・交通：${d.transport}\n`;
+    if(d.spots) text += `・景點/活動：${d.spots}\n`;
+    if(d.stay) text += `・住宿：${d.stay}\n`;
+    text += '\n';
+  }
+  return text.trim();
+}
+
+function generatePrompts() {
+  const title = getVal('f-title') || '旅遊 App';
+  const start = getVal('f-start') || '出發日';
+  const end = getVal('f-end') || '回程日';
+  const cities = getVal('f-cities') || '主要城市';
+  const airport = getVal('f-airport') || '機場資訊';
+  const pax = getVal('f-pax') || '2';
+  const type = getVal('f-type') || '自由行';
+  const special = getVal('f-special');
+  const color1 = document.getElementById('f-color1')?.value || '#2B6CB0';
+  const color2 = document.getElementById('f-color2')?.value || '#C9A84C';
+  const color3 = document.getElementById('f-color3')?.value || '#F7F9FC';
+  const font = getVal('f-font') || 'Noto Sans TC';
+  const styleExtra = getVal('f-style-extra');
+  const country = getVal('f-country') || '日本';
+  const itinerary = buildItineraryText();
+  const featureItin = getTagValues('tags-itinerary');
+  const featureGuide = getTagValues('tags-guide');
+  const featureWeather = getTagValues('tags-weather');
+
+  const p0 = `你是一位手機旅遊網頁設計師，專門製作可直接在手機瀏覽器執行的旅遊 Web App。\n\n請先記住以下設定，不需要輸出任何程式碼，確認後回覆「收到，請給我下一段」即可。\n\n行程名稱：${title}\n出發 / 回程：${start} ～ ${end}，共 ${dayCount} 天\n旅遊方式：${pax} 人 ${type}\n主要城市：${cities}\n航班資訊：${airport}${special ? '\n特別需求：' + special : ''}\n\n設計風格：${selectedStyle.name}（${selectedStyle.desc}）\n主色：${color1}　副色：${color2}　背景：${color3}\n字型：${font}${styleExtra ? '\n補充說明：' + styleExtra : ''}\n\n版面規劃：\n- 頂部固定標題列，顯示行程名稱與日期\n- 內容分三個頁面：行程 / 攜帶物品與資訊 / 天氣\n- 底部固定導覽列，點擊切換頁面\n- 圓角卡片設計，適合手機單手操作\n\n以上設定請記住，後續每段指令都要維持同樣風格。`;
+
+  const p1 = `根據剛才確認的設計規格，請建立這個旅遊 Web App 的 HTML 基礎骨架。\n輸出一份完整可在手機瀏覽器執行的單一 HTML 檔案（CSS 與 JS 都寫在同一份）。\n\n標題列（頂部固定）\n- 左側顯示行程名稱「${title}」\n- 右側顯示距出發天數的小標籤\n- 副標題一行顯示日期與天數\n\n底部導覽列（固定在畫面最下方）\n- 三個頁籤：行程、隨身準備、天氣\n- 目前選中的頁籤要有明顯視覺區別\n- 切換時加入淡入效果\n\nCSS 變數定義\n- --color-main: ${color1}\n- --color-accent: ${color2}\n- --color-bg: ${color3}\n- --round: 16px\n- 載入 Google Fonts：${font}\n\n主要內容區\n- 下方留出導覽列的空間，避免內容被遮住\n- 三個區塊分別對應三個頁籤（id 為 pg-trip、pg-pack、pg-weather）\n- 預設顯示行程頁\n\n各區塊先放佔位文字，之後會逐段填入內容。請輸出完整可執行的 HTML。`;
+
+  const p2 = `繼續在同一份 HTML 中，填入「行程」頁面的完整內容（替換 pg-trip 區塊）。\n\n頂部日期切換列\n- 橫向可滑動，每格顯示第幾天與日期\n- 點選後切換到當天內容，選中格套用主色背景\n\n每個景點用卡片呈現，卡片內容包含\n${featureItin}\n\n以下是這次的行程資料，請依照內容逐天建立景點卡片：\n${itinerary || '（尚未填入行程，請返回步驟 3 輸入）'}\n\n針對每個地點，請自動查找並補上：\n- 一句話介紹（50 字內）\n- 參考開放時間與費用\n- Google Maps 連結（以實際座標產生）\n- 性質標籤：餐飲 / 景點 / 購物 / 體驗 / 住宿 / 交通\n\n輸出完整的 pg-trip 區塊 HTML，所有按鈕與切換功能都要可以實際操作。`;
+
+  const p3 = `繼續在同一份 HTML 中，填入「隨身準備」頁面的完整內容（替換 pg-pack 區塊）。\n\n這個頁面包含以下功能區：\n${featureGuide}\n\n打包清單\n分成三個子頁籤：隨身包、登機手提、託運行李，以及一個 ${country} 購物清單\n每一項都可以打勾標記完成，頁面頂端顯示整體完成進度\n可以自行新增或刪除項目\n\n隨身包：證件類（護照、簽證、國際駕照）、付款工具（現金、信用卡）、通訊設備（手機、行動電源、充電線）、日常備品（口罩、常備藥、雨傘）\n登機手提：換洗衣物一套、盥洗用品（每瓶 100ml 以下）、頸枕與眼罩、零食飲料\n託運行李：衣物與鞋子、沐浴與保養品、電器用品（變壓器、吹風機）、藥品與保健品\n\n${country} 旅遊注意事項\n用可展開收合的方式列出，內容請根據「${country}」整理最重要的幾點旅遊規範\n\n緊急聯絡\n用醒目樣式顯示 ${country} 的報案、救護電話，以及台灣駐外單位聯絡方式\n\n訂單收納\n以卡片形式整理：航班（${airport}）、各天住宿（${dayCount} 天）、交通票券、景點門票\n每張卡片可展開，連結欄位留空讓使用者自己填入\n\n輸出完整的 pg-pack 區塊 HTML，所有勾選與展開功能都要可以實際操作。`;
+
+  const p4 = `繼續在同一份 HTML 中，填入「天氣」頁面的完整內容（替換 pg-weather 區塊）。\n\n這個頁面包含以下功能：\n${featureWeather}\n\n旅遊地點：${cities}\n旅遊期間：${start} 至 ${end}\n\n頂部總覽列\n橫向顯示每一天的天氣縮圖，每格包含日期、天氣圖示、最高與最低氣溫\n點選某天後，下方切換到該天的詳細資訊\n\n每天詳細資訊\n請依照實際城市與月份推估合理數據，每天顯示：\n- 天氣狀況與對應圖示\n- 最高 / 最低氣溫與體感溫度\n- 降雨或降雪機率\n- 當天穿搭建議（具體說明上衣、外層、鞋款）\n\n穿搭建議的邏輯\n根據當天所在城市的海拔與天氣給出實用建議，例如高山景點需要防風外層、城市觀光以舒適好走為主\n\n若行程中有特殊地形（高山、海岸、溫差大的地區），在頁面底部加一張提醒卡片\n\n輸出完整的 pg-weather 區塊 HTML。`;
+
+  const prompts = [
+    { num: 'Prompt 0', title: '風格確認', text: p0, hint: '第一個貼入 Gemini，讓 AI 記住風格設定' },
+    { num: 'Prompt 1', title: '整體框架', text: p1, hint: '建立 App 的 HTML 骨架，包含 Header 和底部導覽' },
+    { num: 'Prompt 2', title: '行程頁', text: p2, hint: '最重要的一頁，包含你的完整行程資料' },
+    { num: 'Prompt 3', title: '指南頁', text: p3, hint: '打包清單、旅遊規範、緊急資訊、訂單管理' },
+    { num: 'Prompt 4', title: '天氣頁', text: p4, hint: '每日天氣預報和穿搭建議' },
+  ];
+
+  const container = document.getElementById('prompts-output');
+  container.innerHTML = '';
+
+  prompts.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">${p.num}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text-primary)">${p.title}</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${p.hint}</span>
+      </div>
+      <div class="prompt-output">
+        <div class="prompt-text" id="prompt-text-${idx}">${escapeHtml(p.text)}</div>
+      </div>
+      <button class="copy-btn" id="copy-btn-${idx}" onclick="copyOne(${idx}, '${p.num}')">
+        📋 複製 ${p.num}
+      </button>
+      <div style="height:8px"></div>
+    `;
+    container.appendChild(div);
+  });
+
+  window._allPrompts = prompts;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyOne(idx, label) {
+  const text = window._allPrompts?.[idx]?.text;
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn-' + idx);
+    if(btn) {
+      btn.classList.add('done');
+      btn.textContent = '✓ 已複製！';
+      setTimeout(() => {
+        btn.classList.remove('done');
+        btn.textContent = '📋 複製 ' + label;
+      }, 2000);
+    }
+  });
+}
+
+function copyAll() {
+  if(!window._allPrompts) return;
+  const all = window._allPrompts.map(p =>
+    '='.repeat(50) + '\n' + p.num + '｜' + p.title + '\n' + '='.repeat(50) + '\n\n' + p.text
+  ).join('\n\n\n');
+  navigator.clipboard.writeText(all).then(() => {
+    const btns = document.querySelectorAll('.copy-btn');
+    btns.forEach(b => { b.classList.add('done'); b.textContent = '✓ 全部已複製！'; });
+    setTimeout(() => {
+      btns.forEach(b => { b.classList.remove('done'); });
+      generatePrompts();
+    }, 2500);
+  });
+}
+
+function regenerate() { generatePrompts(); }
+
+function updatePreview() {
+  setCheck('chk-dest', getVal('f-cities').length > 0);
+  setCheck('chk-dates', getVal('f-start').length > 0 && getVal('f-end').length > 0);
+  setCheck('chk-style', true); // always has a default selected
+  const pasteVal = (document.getElementById('f-itinerary-paste')?.value || '').trim();
+  const hasManual = dayData.some(d => d.spots || d.transport);
+  setCheck('chk-days', pasteVal.length > 10 || hasManual);
+}
+
+function setCheck(id, done) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const box = el.querySelector('.check-box');
+  if (done) {
+    el.classList.add('checked');
+    box.textContent = '✓';
+  } else {
+    el.classList.remove('checked');
+    box.textContent = '';
+  }
+}
+
+document.querySelectorAll('.tag-toggle').forEach(t => {
+  t.addEventListener('click', function() { this.classList.toggle('on'); });
+});
+
+rebuildDays();
+
+</script>
+</body>
+</html>
