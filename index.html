@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LAB ENTRANCE｜低調光澤版</title>
+  <title>LAB ENTRANCE｜API KEY的應用</title>
   <meta name="description" content="卡片式入口頁範例：可搜尋、可依標籤篩選，方便修改縮圖、連結與新增標籤。" />
   <meta name="theme-color" content="#0b1020" />
   <style>
@@ -277,21 +277,6 @@
       margin-top:18px;padding:18px;border-radius:18px;border:1px dashed rgba(255,255,255,.14);
       color:var(--muted);text-align:center;background:rgba(255,255,255,.02)
     }
-
-    .helper{
-      margin-top:26px;padding:20px;border-radius:24px;border:1px solid rgba(255,255,255,.08);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),
-        linear-gradient(180deg, rgba(11,16,30,.9), rgba(9,13,24,.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.07),
-        var(--shadow-soft);
-    }
-    .helper h2{margin:0 0 10px;font-size:18px}
-    .helper p,.helper li{color:var(--muted);font-size:14px}
-    .helper code{
-      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:1px 6px;border-radius:8px;color:#ffffff
-    }
   </style>
 </head>
 <body>
@@ -302,7 +287,7 @@
           <div class="logo" aria-hidden="true">L</div>
           <div>
             <h1 class="title">Ai輔助互動頁面建置</h1>
-            <p class="subtitle">低調暗色主題</p>
+            <p class="subtitle">API KEY的應用</p>
           </div>
         </div>
         <div class="top-badge">2026 eduTool</div>
@@ -329,41 +314,21 @@
   </div>
 
   <script>
-    /*
-    ======================================================================
-    一、標籤設定區 TAG_DEFS
-    ----------------------------------------------------------------------
-    用途：控制頁面右上角會出現哪些篩選按鈕。
-
-    修改方式：
-    1. label = 按鈕顯示文字
-    2. value = 內部識別值，請保持簡短且唯一
-    3. 如果新增新標籤，記得同步把對應卡片的 tag 改成同樣 value
-    ======================================================================
-    */
+    /* ======================================================================
+       一、標籤設定區 TAG_DEFS
+       ====================================================================== */
     const TAG_DEFS = [
-      { label: '全部', value: 'all' },
-      { label: 'Java', value: 'java' },
-      { label: 'CSS', value: 'css' },
-      { label: 'JS', value: 'js' },
-      { label: '工具', value: 'tool' },
-      { label: '繪圖', value: 'draw' },
-      { label: '其他', value: 'other' },
+      { label: '全部',         value: 'all'    },
+      { label: 'Gemini',      value: 'gemini' },
+      { label: 'Google Drive', value: 'drive'  },
+      { label: '互動工具',    value: 'tool'   },
     ];
 
-    /*
-    ======================================================================
-    二、縮圖設定區 THUMBNAILS
-    ----------------------------------------------------------------------
-    用途：集中管理每種縮圖 SVG。
-
-    修改方式：
-    1. 左邊 key 是縮圖代號，右邊是 SVG 字串
-    2. 卡片資料裡只要寫 thumbnail: 'dashboard' 這種代號即可
-    3. 之後要換圖時，只需要改這裡，不用去找每一張卡片的 HTML
-    ======================================================================
-    */
+    /* ======================================================================
+       二、縮圖設定區 THUMBNAILS
+       ====================================================================== */
     const THUMBNAILS = {
+      /* 卡牌 / 區塊佈局 */
       blocks: `
         <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
           <rect x="14" y="16" width="70" height="34" rx="8" fill="currentColor" opacity=".85"/>
@@ -373,8 +338,9 @@
           <circle cx="49" cy="33" r="4" fill="#0f172a"/>
           <circle cx="131" cy="33" r="4" fill="#dbeafe"/>
           <path d="M49 39v28M131 39v28" stroke="currentColor" opacity=".4" stroke-dasharray="4 4"/>
-        </svg>
-      `,
+        </svg>`,
+
+      /* 重力軌道 / 科學模擬 */
       orbit: `
         <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
           <circle cx="100" cy="60" r="28" fill="currentColor" opacity=".75"/>
@@ -382,8 +348,9 @@
           <circle cx="44" cy="60" r="5" fill="#dbeafe"/>
           <circle cx="144" cy="78" r="6" fill="#bfdbfe"/>
           <circle cx="150" cy="38" r="4" fill="#fde68a"/>
-        </svg>
-      `,
+        </svg>`,
+
+      /* 儀表板 / 指針 */
       gauge: `
         <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
           <path d="M42 78a58 58 0 0 1 116 0" stroke="currentColor" stroke-width="12" opacity=".2"/>
@@ -394,8 +361,9 @@
           <circle cx="80" cy="94" r="3" fill="#dbeafe" opacity=".5"/>
           <circle cx="120" cy="94" r="3" fill="#dbeafe" opacity=".5"/>
           <circle cx="140" cy="88" r="3" fill="#dbeafe" opacity=".5"/>
-        </svg>
-      `,
+        </svg>`,
+
+      /* 文件 / Markdown / 書庫 */
       doc: `
         <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
           <rect x="54" y="18" width="92" height="84" rx="10" stroke="currentColor" stroke-width="2"/>
@@ -403,8 +371,9 @@
           <rect x="64" y="52" width="42" height="10" rx="5" fill="currentColor" opacity=".18"/>
           <rect x="64" y="70" width="58" height="10" rx="5" fill="currentColor" opacity=".18"/>
           <path d="M116 64l10 10 18-22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `,
+        </svg>`,
+
+      /* 排序柱狀圖 */
       bottles: `
         <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
           <path d="M40 90h120" stroke="currentColor" stroke-width="6" opacity=".18" stroke-linecap="round"/>
@@ -414,112 +383,199 @@
           <rect x="60" y="50" width="16" height="22" rx="4" fill="currentColor" opacity=".65"/>
           <rect x="96" y="38" width="16" height="30" rx="4" fill="currentColor" opacity=".85"/>
           <rect x="136" y="48" width="14" height="18" rx="4" fill="currentColor" opacity=".35"/>
-        </svg>
-      `,
+        </svg>`,
+
+      /* 音樂播放器 */
+      music: `
+        <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <circle cx="60" cy="85" r="18" stroke="currentColor" stroke-width="3" opacity=".85"/>
+          <circle cx="60" cy="85" r="7" fill="currentColor" opacity=".6"/>
+          <circle cx="140" cy="85" r="18" stroke="currentColor" stroke-width="3" opacity=".5"/>
+          <circle cx="140" cy="85" r="7" fill="currentColor" opacity=".3"/>
+          <path d="M78 85V30l82-12v55" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <path d="M78 30l82-12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>`,
+
+      /* 數位相簿 */
+      photo: `
+        <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <rect x="20" y="20" width="160" height="80" rx="10" stroke="currentColor" stroke-width="2.5" opacity=".85"/>
+          <circle cx="75" cy="52" r="14" stroke="currentColor" stroke-width="2" opacity=".6"/>
+          <circle cx="75" cy="52" r="6" fill="currentColor" opacity=".5"/>
+          <path d="M20 78l38-28 28 22 24-18 70 26" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+        </svg>`,
+
+      /* 地圖 / 踏查 */
+      map: `
+        <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <path d="M70 18l-42 22v62l42-22 60 22 42-22V18l-42 22Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="rgba(255,255,255,0.04)"/>
+          <path d="M70 18v62M130 40v62" stroke="currentColor" stroke-width="1.5" opacity=".35" stroke-dasharray="4 4"/>
+          <path d="M90 72 Q110 50 130 58" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+          <circle cx="90" cy="72" r="5" fill="currentColor" opacity=".9"/>
+          <circle cx="130" cy="58" r="8" fill="currentColor" opacity=".75"/>
+          <path d="M130 66v10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="130" cy="58" r="3" fill="rgba(0,0,0,0.4)"/>
+        </svg>`,
+
+      /* 手機 APP */
+      phone: `
+        <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <rect x="72" y="10" width="56" height="100" rx="10" stroke="currentColor" stroke-width="2.5" opacity=".85" fill="rgba(255,255,255,0.04)"/>
+          <rect x="88" y="15" width="24" height="6" rx="3" fill="currentColor" opacity=".4"/>
+          <rect x="90" y="98" width="20" height="4" rx="2" fill="currentColor" opacity=".4"/>
+          <rect x="80" y="28" width="40" height="6" rx="3" fill="currentColor" opacity=".6"/>
+          <rect x="80" y="42" width="32" height="5" rx="2.5" fill="currentColor" opacity=".3"/>
+          <rect x="80" y="52" width="38" height="5" rx="2.5" fill="currentColor" opacity=".3"/>
+          <rect x="80" y="62" width="28" height="5" rx="2.5" fill="currentColor" opacity=".3"/>
+          <rect x="82" y="76" width="36" height="12" rx="6" fill="currentColor" opacity=".7"/>
+          <rect x="90" y="80" width="20" height="4" rx="2" fill="rgba(0,0,0,0.35)"/>
+        </svg>`,
     };
 
-    /*
-    ======================================================================
-    三、卡片資料區 CARD_DATA
-    ----------------------------------------------------------------------
-    用途：這是你最常改的地方。
-
-    每張卡片欄位說明：
-    - title       ：卡片標題
-    - href        ：要連出去的頁面路徑
-    - tag         ：主要分類，必須對應 TAG_DEFS.value
-    - badge       ：縮圖左上角小標籤，可自由填
-    - description ：卡片說明
-    - chips       ：卡片底部的小標籤，可填多個
-    - keywords    ：搜尋用關鍵字，建議把別名也放進來
-    - thumbnail   ：對應 THUMBNAILS 的代號
-
-    新增卡片方式：
-    1. 複製下面任一物件
-    2. 改 title / href / tag / description / thumbnail
-    3. 若 tag 是新類別，記得去 TAG_DEFS 新增按鈕
-    ======================================================================
-    */
+    /* ======================================================================
+       三、卡片資料區 CARD_DATA
+       ====================================================================== */
     const CARD_DATA = [
+
+      /* ── Google Drive ── */
       {
         title: '音樂播放器',
         href: 'demo/digital-music-player',
-        tag: 'tool',
-        badge: 'Java',
-        description: '雲端硬碟的音樂播放器',
-        chips: ['演算法', '教學輔助'],
-        keywords: ['java', '排序', 'bubble sort', '演算法', '視覺化'],
-        thumbnail: 'tool',
+        tag: 'drive',
+        badge: 'Google Drive',
+        description: '串接 Google Drive 的線上音樂播放器，支援播放清單管理。',
+        chips: ['音樂', 'Google Drive'],
+        keywords: ['音樂', '播放', '雲端硬碟', 'google drive', 'music'],
+        thumbnail: 'music',
       },
       {
         title: '數位圖書館',
         href: 'demo/digital-library',
-        tag: 'tool',
-        badge: 'JS',
-        description: '用 JavaScript 建立簡單互動模型，支援滑鼠與觸控操作。',
-        chips: ['互動', '科學'],
-        keywords: ['js', 'science', '模擬', '物理', '互動'],
-        thumbnail: 'tool',
+        tag: 'drive',
+        badge: 'Google Drive',
+        description: '串接 Google Drive 的數位書庫，支援書單瀏覽與互動查詢。',
+        chips: ['閱讀', 'Google Drive'],
+        keywords: ['圖書館', '書單', '閱讀', 'library', 'google drive'],
+        thumbnail: 'doc',
       },
       {
         title: '數位相簿',
         href: 'demo/digital-photo.html',
-        tag: 'tool',
-        badge: 'JS',
-        description: '雲端硬碟數位相簿。',
-        chips: ['科學', '互動實驗'],
-        keywords: ['physics', '拋體', '物理', '實驗', 'lab'],
-        thumbnail: 'tool',
-      },      
+        tag: 'drive',
+        badge: 'Google Drive',
+        description: '串接 Google Drive 的數位相簿，支援縮圖瀏覽與圖片展示。',
+        chips: ['相簿', 'Google Drive'],
+        keywords: ['相簿', '照片', '圖片', 'photo', 'google drive'],
+        thumbnail: 'photo',
+      },
+
+      /* ── Gemini ── */
       {
         title: '獨立研究討論',
         href: 'demo/research-game.html',
-        tag: 'css',
-        badge: 'CSS',
-        description: '整理常見卡片版型，方便快速複製到你的新專案。',
-        chips: ['版面', 'UI'],
-        keywords: ['css', 'card', 'layout', '排版', 'ui'],
+        tag: 'gemini',
+        badge: 'Gemini',
+        description: '以卡牌遊戲形式進行獨立研究主題討論與發想，由 Gemini 驅動。',
+        chips: ['研究', '討論', 'Gemini'],
+        keywords: ['研究', '卡牌', '討論', 'independent study', 'gemini', 'ai'],
         thumbnail: 'blocks',
       },
       {
-        title: '互動儀表板範本',
+        title: '人文踏查規劃',
+        href: 'demo/travel-map.html',
+        tag: 'gemini',
+        badge: 'Gemini',
+        description: '與 Gemini 共同規劃人文踏查行程，結合地圖與 AI 對話。',
+        chips: ['踏查', '地圖', 'Gemini'],
+        keywords: ['人文', '踏查', '地圖', '旅行', 'gemini', 'ai', '行程規劃'],
+        thumbnail: 'map',
+      },
+      {
+        title: '旅行 APP 產生器',
+        href: 'demo/travel-prompt-generator.html',
+        tag: 'gemini',
+        badge: 'Gemini',
+        description: '輸入旅行需求，由 Gemini 自動產生手機 APP 介面的 Prompt 範本。',
+        chips: ['Prompt', 'APP', 'Gemini'],
+        keywords: ['prompt', '旅行', 'app', '產生器', 'gemini', 'ai'],
+        thumbnail: 'phone',
+      },
+
+      /* ── 互動工具 ── */
+      {
+        title: '互動儀表板',
         href: 'demo/ui-dashboard.html',
-        tag: 'js',
-        badge: 'CSS + JS',
-        description: '簡潔的單指標儀表板，可改成台股、感測器或課堂競賽看板。',
-        chips: ['視覺化', '儀表板'],
-        keywords: ['dashboard', 'gauge', '儀表板', '數值', '圖表'],
+        tag: 'tool',
+        badge: '互動工具',
+        description: '指針儀表 + 歷史折線，可接台股、感測器或課堂競賽分數。',
+        chips: ['儀表板', '視覺化'],
+        keywords: ['dashboard', 'gauge', '儀表板', '數值', '圖表', '台股'],
         thumbnail: 'gauge',
       },
       {
-        title: '說明文件檢視工具',
+        title: 'CSS 卡片排版',
+        href: 'demo/css-cards.html',
+        tag: 'tool',
+        badge: '互動工具',
+        description: '收集常用卡片版型，觀察字級層次與配色，複製就能用在新專案。',
+        chips: ['CSS', '版面', 'UI'],
+        keywords: ['css', 'card', 'layout', '排版', 'ui', '卡片'],
+        thumbnail: 'blocks',
+      },
+      {
+        title: '排序視覺化',
+        href: 'demo/java-sim.html',
+        tag: 'tool',
+        badge: '互動工具',
+        description: '用柱狀圖一步步看出 Bubble Sort 等演算法在做什麼。',
+        chips: ['演算法', '視覺化'],
+        keywords: ['java', '排序', 'bubble sort', '演算法', '視覺化'],
+        thumbnail: 'bottles',
+      },
+      {
+        title: 'JS 科學模擬',
+        href: 'demo/js-science.html',
+        tag: 'tool',
+        badge: '互動工具',
+        description: '拖曳小球體驗重力井模擬，可延伸為單擺、粒子擴散等科學模型。',
+        chips: ['物理', '模擬'],
+        keywords: ['js', 'science', '模擬', '物理', '重力', '互動'],
+        thumbnail: 'orbit',
+      },
+      {
+        title: 'Physics Lab',
+        href: 'demo/physics-lab.html',
+        tag: 'tool',
+        badge: '互動工具',
+        description: '調整初速度，即時觀察水平拋射的拋物線軌跡變化。',
+        chips: ['拋體', '物理'],
+        keywords: ['physics', '拋體', '物理', '實驗', 'lab', '軌跡'],
+        thumbnail: 'gauge',
+      },
+      {
+        title: 'Markdown 檢視',
         href: 'demo/markdown-viewer.html',
         tag: 'tool',
-        badge: '工具',
-        description: '專門用來預覽 README / 教學講義的 Markdown 小工具。',
-        chips: ['Other', 'Doc'],
-        keywords: ['markdown', 'doc', 'readme', '工具', '文件'],
+        badge: '互動工具',
+        description: '貼上 Markdown 文字，左邊編輯右邊即時預覽，適合寫教學講義草稿。',
+        chips: ['文件', 'Markdown'],
+        keywords: ['markdown', 'doc', 'readme', '工具', '文件', '講義'],
         thumbnail: 'doc',
       },
 
     ];
 
-    /*
-    ======================================================================
-    四、以下是畫面渲染與篩選邏輯
-    ----------------------------------------------------------------------
-    通常不用改。
-    如果你只是新增卡片 / 新增標籤 / 換縮圖，到上面三區修改即可。
-    ======================================================================
-    */
-    const cardGrid = document.getElementById('cardGrid');
-    const chipBar = document.getElementById('chipBar');
+    /* ======================================================================
+       四、畫面渲染與篩選邏輯（不需修改）
+       ====================================================================== */
+    const cardGrid    = document.getElementById('cardGrid');
+    const chipBar     = document.getElementById('chipBar');
     const searchInput = document.getElementById('searchInput');
     const resultCount = document.getElementById('resultCount');
-    const emptyState = document.getElementById('emptyState');
+    const emptyState  = document.getElementById('emptyState');
 
     let activeTag = 'all';
-    let keyword = '';
+    let keyword   = '';
 
     function normalizeText(text) {
       return String(text || '').toLowerCase().trim();
@@ -556,8 +612,8 @@
     }
 
     function createCardHTML(card) {
-      const thumb = THUMBNAILS[card.thumbnail] || THUMBNAILS.doc;
-      const chips = (card.chips || []).map(text => `<span class="tag">${text}</span>`).join('');
+      const thumb    = THUMBNAILS[card.thumbnail] || THUMBNAILS.doc;
+      const chips    = (card.chips || []).map(text => `<span class="tag">${text}</span>`).join('');
       const tagLabel = TAG_DEFS.find(tag => tag.value === card.tag)?.label || card.tag;
 
       return `
@@ -575,7 +631,7 @@
             <div class="tags">${chips}</div>
           </div>
           <div class="actions">
-            <span class="small-note">點整張卡片即可前往</span>
+            <span class="hint">點整張卡片即可前往</span>
             <span class="go">前往 ↗</span>
           </div>
         </a>
