@@ -411,7 +411,7 @@ const DEFAULT_CONFIG = {
 const DEFAULT_SPOTS = [
   {id:1, name:'廟口夜市',           emoji:'🍢',type:'food',   lat:25.12774,lng:121.74310,desc:'全台知名夜市，滷肉飯、天婦羅、一口吃香腸',note:'觀察攤販空間分布與廟宇的共生關係',stay:'45–60 分'},
   {id:2, name:'奠濟宮',             emoji:'🏮',type:'culture',lat:25.12783,lng:121.74289,desc:'廟口精神核心，清代建廟祭祀開漳聖王',note:'閩南移民信仰中心，研究廟宇與市集共生空間',stay:'20 分'},
-  {id:3, name:'正濱漁港彩色屋',     emoji:'🎨',type:'sight',  lat:25.15328,lng:121.77408,desc:'日治漁業遺址改造，彩虹建築倒影成地標',note:'分析漁港再生計畫平衡文化保留與觀光轉型',stay:'30 分'},
+  {id:3, name:'正濱漁港',           emoji:'🛶',type:'sight',  lat:25.15310,lng:121.77380,desc:'日治時代重要漁港，現為觀光與漁業共存的小漁港',note:'觀察漁港空間轉型，訪談漁民了解漁業變遷',stay:'30 分'},
   {id:4, name:'和平島地質公園',     emoji:'🪨',type:'sight',  lat:25.15578,lng:121.77653,desc:'千萬年海蝕奇景，兼具地質與殖民歷史',note:'探討自然地貌與人文歷史的複合意義',stay:'60 分'},
   {id:5, name:'清法戰爭紀念園區',   emoji:'🎖',type:'culture',lat:25.13100,lng:121.76310,desc:'1884年清法戰爭基隆之役歷史遺跡',note:'思考殖民與抵抗的歷史詮釋',stay:'30 分'},
   {id:6, name:'基隆故事館',         emoji:'🏠',type:'culture',lat:25.12640,lng:121.74060,desc:'日式官舍改建，常設「基隆學」展覽',note:'了解港都日治生活史，分析文化資產活化策略',stay:'40 分'},
@@ -422,6 +422,13 @@ const DEFAULT_SPOTS = [
   {id:11,name:'太白莊肉焿老攤',     emoji:'🍲',type:'food',   lat:25.12750,lng:121.74350,desc:'50年老字號，基隆特色肉焿湯麵',note:'品嚐閩南飲食文化，觀察老攤保存在地記憶',stay:'20 分'},
   {id:12,name:'海洋廣場',           emoji:'🌊',type:'sight',  lat:25.13880,lng:121.75830,desc:'基隆港口門戶，舉辦港都節慶的公共空間',note:'觀察公共空間設計如何反映港口身份認同',stay:'20 分'},
   {id:13,name:'國立海洋科技博物館', emoji:'🔭',type:'culture',lat:25.15536,lng:121.78105,desc:'台灣唯一海洋科技主題博物館',note:'探索海洋科技與人類社會的關係',stay:'90–120 分'},
+  {id:14,name:'八尺門聚落',         emoji:'🎣',type:'culture',lat:25.15220,lng:121.77150,desc:'阿美族漁工聚落遺址，《八尺門的辯護人》拍攝地',note:'探討原住民漁工遷徙史與族群文化認同',stay:'30 分'},
+  {id:15,name:'阿根納造船廠遺構',   emoji:'🏚',type:'sight',  lat:25.15270,lng:121.77320,desc:'百年工業廢墟，美國隊長廣告取景地，市定歷史建築',note:'觀察工業遺產保存與再利用的城市課題',stay:'30 分'},
+  {id:16,name:'正濱漁港彩色屋',     emoji:'🌈',type:'sight',  lat:25.15328,lng:121.77408,desc:'七彩漁村建築倒映海面，台版地中海打卡聖地',note:'分析地方創生如何透過色彩改造翻轉老漁港',stay:'30 分'},
+  {id:17,name:'遠東泡泡冰',         emoji:'🧊',type:'food',   lat:25.12790,lng:121.74250,desc:'1955年創立，廟口尾端老字號，花生雞蛋牛奶口味必嚐',note:'了解基隆傳統甜食文化與在地飲食記憶',stay:'15 分'},
+  {id:18,name:'連珍糕餅店',         emoji:'🍡',type:'food',   lat:25.12870,lng:121.74120,desc:'百年餅藝老店，芋泥球、雪露為招牌伴手禮',note:'探討百年餅舖如何在傳統與創新間找到平衡',stay:'20 分'},
+  {id:19,name:'李鵠餅店',           emoji:'🥮',type:'food',   lat:25.12800,lng:121.74300,desc:'清治末期創立，咖哩酥、鳳梨酥基隆必帶伴手禮',note:'研究老字號糕餅店百年傳承的家族記憶',stay:'15 分'},
+  {id:20,name:'兩全天婦羅',         emoji:'🍤',type:'food',   lat:25.12760,lng:121.74330,desc:'基隆廟口在地天婦羅老攤，魚漿製品飄香數十年',note:'觀察基隆海港飲食文化中魚漿製品的在地特色',stay:'15 分'},
 ];
 
 // ───────────────────────────────────────
@@ -727,7 +734,7 @@ async function aiSuggest(id) {
 請為${cfg.targetAudience}設計踏查規劃，只回覆純 JSON（不要 markdown）：
 {"task":"踏查任務","who":"建議訪問對象","q":"1. 問題\\n2. 問題\\n3. 問題\\n4. 問題","obs":"觀察重點與記錄方式"}`;
   try {
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`,
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${gKey}`,
       {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:p}]}],generationConfig:{temperature:.7,maxOutputTokens:500}})});
     const data=await res.json();
     if(data.error){toast('❌ '+data.error.message);return;}
@@ -811,7 +818,7 @@ async function sendChat(){
   document.getElementById('sendBtn').disabled=true; addTyping();
   const sys=`你是專業的人文踏查規劃嚮導，協助${cfg.targetAudience}進行在地文化探究。${cfg.aiContext}${route.length?'目前規劃景點：'+route.map(s=>s.name).join('、')+'。':''}以鼓勵探究的語氣回應。繁體中文。`;
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`,
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${gKey}`,
       {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:chatHist,generationConfig:{temperature:.75,maxOutputTokens:900}})});
     const data=await res.json();
     rmTyping();
@@ -975,7 +982,7 @@ async function aiGenSpots(){
 格式：{"themeTitle":"標題8字","stationName":"出發地","stationLat":緯度,"stationLng":經度,"aiContext":"核心主題50字","spots":[{"name":"","emoji":"","type":"food/sight/culture","lat":0,"lng":0,"stay":"","desc":"25字","note":"20字"}]}
 8–12個景點，台灣真實座標，類型均衡。`;
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`,
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${gKey}`,
       {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:p}]}],generationConfig:{temperature:.5,maxOutputTokens:2000}})});
     const data=await res.json();
     if(data.error){st.textContent='❌ '+data.error.message;return;}
