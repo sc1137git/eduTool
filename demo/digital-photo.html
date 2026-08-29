@@ -1,576 +1,118 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活動相簿 - 產生器</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Noto Sans TC', sans-serif; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>活動相簿 - 產生器</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',sans-serif}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#4b5563;border-radius:4px}::-webkit-scrollbar-track{background:transparent}
+</style>
 </head>
 <body class="bg-gray-950 text-gray-200 min-h-screen flex items-center justify-center p-4 sm:p-8">
+<div class="flex flex-col md:flex-row w-full max-w-6xl h-[88vh] bg-gray-900 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] overflow-hidden border border-gray-700">
+<div class="w-full md:w-80 flex-shrink-0 flex flex-col bg-gray-900 border-r border-gray-700 h-full">
+<div class="p-5 border-b border-gray-700 flex items-center gap-3 bg-gray-800/50">
+<span class="text-2xl">📸</span><div><h1 class="text-lg font-bold text-gray-100">活動相簿</h1><p class="text-xs text-gray-500">高速・自動最新學年度版</p></div>
+</div>
+<div class="flex-grow overflow-y-auto p-5 space-y-5">
+<div><label class="block text-sm font-medium text-gray-300 mb-1.5">相簿標題</label><input id="input-school-name" type="text" placeholder="例如：中正國小附設幼兒園" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"></div>
+<div><label class="block text-sm font-medium text-gray-300 mb-1.5">Google API Key</label><input id="input-api-key" type="text" placeholder="輸入 Google Drive API Key" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"></div>
+<div><label class="block text-sm font-medium text-gray-300 mb-1.5">年度資料夾所在位置 (Root)</label><input id="input-root-folder" type="text" placeholder="貼上 Google Drive 資料夾網址或 ID" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"></div>
+<div class="rounded-xl border border-orange-900/60 bg-orange-950/25 p-4 text-xs leading-5 text-gray-400"><p class="font-medium text-orange-300 mb-1">⚡ 不用再設定 Default Folder</p><p>相簿會掃描 Root 底下名稱開頭為數字的資料夾，例如 113、114學年度、115 學年度，並自動進入數字最大的年度。明年新增 116 後，不必再改程式。</p></div>
+<div class="rounded-xl border border-gray-700 bg-gray-800/50 p-4 text-xs leading-5 text-gray-500">已包含：照片封面快取、延遲載入、Drive API 並行讀取、封面請求限流、上一張／下一張預載，以及需要時才載入 JSZip。</div>
+</div>
+<div class="p-5 border-t border-gray-700 space-y-3">
+<button onclick="generateApp()" id="btn-generate" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-medium py-2.5 px-4 rounded-md flex justify-center items-center gap-2">🖼️ 生成相簿</button>
+<button onclick="copyCode()" id="btn-copy" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2.5 px-4 rounded-md border border-gray-600">複製 HTML 碼</button>
+</div>
+</div>
+<div class="flex-grow flex flex-col bg-gray-800 h-full min-w-0">
+<div class="flex bg-gray-900 border-b border-gray-700"><button onclick="switchTab('preview')" id="tab-preview" class="px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white">網頁預覽</button><button onclick="switchTab('code')" id="tab-code" class="px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400 hover:text-gray-200">HTML 原始碼</button></div>
+<div class="flex-grow relative overflow-hidden bg-gray-200"><iframe id="preview-iframe" class="absolute inset-0 w-full h-full border-none" srcdoc="<div style='display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;font-family:sans-serif;color:#6b7280;background:#f3f4f6'><div style='font-size:52px'>📸</div><p>填完左側三項資訊後，點擊「生成相簿」</p><small>產出的相簿會自動進入最新學年度</small></div>"></iframe><textarea id="code-output" readonly class="absolute inset-0 w-full h-full p-6 font-mono text-sm bg-gray-950 text-green-400 outline-none resize-none whitespace-pre overflow-auto hidden"></textarea></div>
+</div>
+</div>
 
-    <div class="flex flex-col md:flex-row w-full max-w-6xl h-[85vh] bg-gray-900 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] overflow-hidden border border-gray-700 relative">
-        
-        <!-- 左側：設定與控制區 -->
-        <div class="w-full md:w-80 flex-shrink-0 flex flex-col bg-gray-900 border-r border-gray-700 z-10 h-full">
-            <div class="p-5 border-b border-gray-700 flex items-center gap-3 bg-gray-800/50">
-                <span class="text-2xl">📸</span>
-                <h1 class="text-lg font-bold text-gray-100 tracking-wide">活動相簿</h1>
-            </div>
-            
-            <div class="flex-grow overflow-y-auto p-5 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1.5">相簿標題</label>
-                    <input type="text" id="input-school-name" placeholder="輸入活動或單位名稱" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1.5">Google API Key</label>
-                    <input type="text" id="input-api-key" placeholder="輸入 API Key" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1.5">首頁資料夾 (Root)</label>
-                    <input type="text" id="input-root-folder" placeholder="貼上主要層網址或 ID" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1.5">預設開啟層 (Default)</label>
-                    <input type="text" id="input-default-folder" placeholder="貼上預設進入層網址或 ID" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors">
-                </div>
-            </div>
-
-            <div class="p-5 border-t border-gray-700 space-y-3 bg-gray-900">
-                <button onclick="generateApp()" id="btn-generate" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-medium py-2.5 px-4 rounded-md transition-colors flex justify-center items-center gap-2 shadow-lg shadow-orange-900/20">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    生成相簿
-                </button>
-                <button onclick="copyCode()" id="btn-copy" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2.5 px-4 rounded-md transition-colors border border-gray-600 flex justify-center items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    複製 HTML 碼
-                </button>
-            </div>
-        </div>
-
-        <!-- 右側：預覽與程式碼區 -->
-        <div class="flex-grow flex flex-col bg-gray-800 h-full relative">
-            <div class="flex bg-gray-900 border-b border-gray-700">
-                <button onclick="switchTab('preview')" id="tab-preview" class="px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white transition-colors">網頁預覽</button>
-                <button onclick="switchTab('code')" id="tab-code" class="px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors">HTML 原始碼</button>
-            </div>
-            <div class="flex-grow relative overflow-hidden bg-[#e5e7eb]">
-                <iframe id="preview-iframe" class="absolute inset-0 w-full h-full border-none" srcdoc="<div style='display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;font-family:sans-serif;color:#6b7280;background-color:#f3f4f6;'><svg style='width:64px;height:64px;margin-bottom:16px;color:#9ca3af;' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'></path></svg><p style='font-size:1.1rem; letter-spacing: 0.05em;'>請在左側輸入資訊後，點擊「生成」</p></div>"></iframe>
-                <textarea id="code-output" readonly class="absolute inset-0 w-full h-full p-6 font-mono text-sm bg-gray-950 text-green-400 outline-none resize-none whitespace-pre overflow-auto hidden" placeholder="尚未生成程式碼..."></textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- 模板隱藏區 -->
-    <textarea id="app-template" class="hidden">
-<!DOCTYPE html>
+<textarea id="app-template" class="hidden"><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{SCHOOL_NAME}}活動相簿</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-        
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #fff9f0; 
-            color: #4a4a4a;
-            margin: 0;
-        }
-
-        header {
-            background-color: #ffffff;
-            border-bottom: 3px solid #f39c12;
-            box-shadow: 0 2px 5px rgba(243, 156, 18, 0.1);
-        }
-
-        .item-card {
-            background: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid #ffe4bc;
-            position: relative;
-        }
-        
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px -10px rgba(243, 156, 18, 0.4);
-            border-color: #f39c12;
-        }
-
-        .item-card.selected {
-            border: 3px solid #f39c12;
-            background: #fff1e0;
-        }
-
-        .card-cover {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background-size: cover;
-            background-position: center;
-            background-color: #fff1e0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .select-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border: 2px solid #f39c12;
-            border-radius: 4px;
-            display: none; 
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        .selecting .select-overlay { display: flex; }
-        .selected .select-overlay { background: #f39c12; color: white; }
-
-        .folder-title {
-            padding: 10px 8px;
-            text-align: center;
-            background: #ffffff;
-            border-top: 1px solid #fff1e0;
-        }
-
-        .folder-placeholder {
-            color: #f39c12;
-            font-size: 2.5rem;
-            opacity: 0.4;
-        }
-
-        .control-btn {
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            font-size: 1.2rem;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .control-btn:hover { background-color: #f39c12; transform: scale(1.1); color: white; }
-
-        .action-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .loading-spinner {
-            width: 40px; height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #f39c12;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="preconnect" href="https://www.googleapis.com">
+<link rel="preconnect" href="https://drive.google.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>{{SCHOOL_NAME}}活動相簿</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+body{font-family:'Noto Sans TC',sans-serif;background:#fff9f0;color:#4a4a4a;margin:0}header{background:#fff;border-bottom:3px solid #f39c12;box-shadow:0 2px 5px rgba(243,156,18,.1)}.item-card{background:#fff;border-radius:12px;overflow:hidden;transition:.25s;border:1px solid #ffe4bc;position:relative}.item-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px -10px rgba(243,156,18,.4);border-color:#f39c12}.item-card.selected{border:3px solid #f39c12;background:#fff1e0}.card-cover{width:100%;aspect-ratio:1/1;background-size:cover;background-position:center;background-color:#fff1e0;display:flex;align-items:center;justify-content:center;position:relative}.select-overlay{position:absolute;top:10px;right:10px;width:24px;height:24px;background:#fff;border:2px solid #f39c12;border-radius:4px;display:none;align-items:center;justify-content:center;z-index:10}.selecting .select-overlay{display:flex}.selected .select-overlay{background:#f39c12;color:#fff}.folder-title{padding:10px 8px;text-align:center;background:#fff;border-top:1px solid #fff1e0}.folder-placeholder{color:#f39c12;font-size:2.5rem;opacity:.4}.control-btn{background:rgba(0,0,0,.6);color:#fff;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:.2s;font-size:1.2rem;border:1px solid rgba(255,255,255,.2)}.control-btn:hover{background:#f39c12;transform:scale(1.08)}.action-btn{padding:8px 16px;border-radius:20px;font-size:.85rem;display:inline-flex;align-items:center;gap:8px;font-weight:500}.loading-spinner{width:40px;height:40px;border:3px solid #f3f3f3;border-top:3px solid #f39c12;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-    <div class="min-h-screen">
-        <header class="sticky top-0 z-40">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <h1 class="text-xl font-bold text-gray-800">{{SCHOOL_NAME}} <span class="text-[#f39c12]">活動相簿</span></h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button id="refresh-btn" class="text-gray-400 hover:text-[#f39c12] text-xl transition"><i class="fas fa-sync-alt"></i></button>
-                </div>
-            </div>
-        </header>
-
-        <div class="container mx-auto px-4 py-5 flex flex-wrap justify-between items-center gap-4">
-            <div id="breadcrumb" class="text-sm text-gray-500 flex items-center">
-                <span class="cursor-pointer hover:text-[#f39c12] transition" onclick="load(rootFolderId)">首頁</span>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-                <button id="toggle-select-mode" class="action-btn bg-gray-200 text-gray-700 hover:bg-gray-300">
-                    <i class="fas fa-check-square"></i> 選取照片
-                </button>
-                <button id="batch-download" class="action-btn bg-[#f39c12] text-white hidden">
-                    <i class="fas fa-file-archive"></i> 下載選中項目 (<span id="select-count">0</span>)
-                </button>
-                <a id="open-drive-btn" target="_blank" class="action-btn bg-white border border-gray-200 text-[#4285F4] shadow-sm hidden">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" width="18">
-                    開啟雲端資料夾
-                </a>
-            </div>
-        </div>
-
-        <main class="container mx-auto px-4 pb-20">
-            <div id="loading-area" class="flex flex-col items-center justify-center py-20">
-                <div class="loading-spinner mb-4"></div>
-                <p id="loading-text" class="text-gray-400 text-sm italic">正在載入相簿...</p>
-            </div>
-
-            <div id="main-content" class="hidden">
-                <div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-12"></div>
-                <div id="files-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
-            </div>
-        </main>
-
-        <div id="viewer" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col backdrop-blur-xl">
-            <div class="flex justify-end items-center p-6 space-x-4 z-[70]">
-                <button id="btn-download" class="control-btn" title="下載檔案"><i class="fas fa-download"></i></button>
-                <button id="btn-rotate" class="control-btn" title="旋轉圖片"><i class="fas fa-redo"></i></button>
-                <button id="btn-slideshow" class="control-btn" title="播放幻燈片"><i class="fas fa-play"></i></button>
-                <button id="btn-close" class="control-btn bg-red-600/80 hover:bg-red-600 border-none" title="關閉"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <div class="flex-grow flex items-center justify-center relative">
-                <button id="btn-prev" class="absolute left-6 text-white/30 hover:text-white text-5xl z-[60] p-4 transition-all"><i class="fas fa-chevron-left"></i></button>
-                <div id="media-stage" class="max-w-full max-h-full flex items-center justify-center p-4">
-                    <img id="view-img" class="max-w-full max-h-[85vh] object-contain transition-transform duration-300 shadow-2xl" src="" style="display:none;">
-                    <video id="view-video" class="max-w-full max-h-[85vh]" controls style="display:none;"></video>
-                    <iframe id="view-mov" class="w-[90vw] h-[75vh] border-0" style="display:none;"></iframe>
-                </div>
-                <button id="btn-next" class="absolute right-6 text-white/30 hover:text-white text-5xl z-[60] p-4 transition-all"><i class="fas fa-chevron-right"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 設定區
-        const rootFolderId = '{{ROOT_FOLDER_ID}}'; // 主要層 (首頁)
-        const defaultFolderId = '{{DEFAULT_FOLDER_ID}}'; // 預設進入層
-        const apiKey = '{{API_KEY}}'; // API KEY
-        const driveApiUrl = 'https://www.googleapis.com/drive/v3';
-
-        let currentId = '';
-        let mediaList = [];
-        let currentIndex = 0;
-        let isPlaying = false;
-        let isSelectMode = false;
-        let selectedIds = new Set();
-        let playTimer = null;
-        let rotations = {};
-
-        // 啟動時載入預設資料夾
-        window.onload = () => { 
-            load(defaultFolderId); 
-            bindEvents(); 
-        };
-
-        function bindEvents() {
-            document.getElementById('btn-close').onclick = closeViewer;
-            document.getElementById('btn-prev').onclick = prev;
-            document.getElementById('btn-next').onclick = next;
-            document.getElementById('btn-rotate').onclick = rotate;
-            document.getElementById('btn-slideshow').onclick = togglePlay;
-            document.getElementById('btn-download').onclick = downloadCurrent;
-            document.getElementById('refresh-btn').onclick = () => load(currentId);
-            document.getElementById('toggle-select-mode').onclick = toggleSelectMode;
-            document.getElementById('batch-download').onclick = startBatchDownload;
-        }
-
-        async function load(id) {
-            currentId = id;
-            isSelectMode = false;
-            selectedIds.clear();
-            updateUIForSelectMode();
-            showLoading(true, "正在讀取雲端內容...");
-            
-            try {
-                const meta = await fetch(`${driveApiUrl}/files/${id}?fields=name&key=${apiKey}`).then(r => r.json());
-                
-                // 1. 抓取資料夾
-                const fQuery = `'${id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-                const fRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(fQuery)}&fields=files(id,name)&key=${apiKey}`).then(r => r.json());
-                let folders = fRes.files || [];
-                
-                folders.sort((a, b) => {
-                    const getNum = (str) => {
-                        const match = str.match(/^\d+/);
-                        return match ? parseInt(match[0], 10) : 0;
-                    };
-                    const numA = getNum(a.name);
-                    const numB = getNum(b.name);
-                    if (numA !== numB) return numB - numA; 
-                    return b.name.localeCompare(a.name);
-                });
-
-                // 2. 抓取照片與影片
-                const mQuery = `'${id}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed=false`;
-                const mRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(mQuery)}&fields=files(id,name,mimeType)&key=${apiKey}&orderBy=name desc`).then(r => r.json());
-                let files = mRes.files || [];
-                
-                render(meta.name, folders, files);
-            } catch (err) { console.error(err); } finally { showLoading(false); }
-        }
-
-        function render(name, folders, files) {
-            updateBread(name);
-            const fGrid = document.getElementById('folders-grid');
-            const mGrid = document.getElementById('files-grid');
-            const mContainer = document.getElementById('main-content');
-            fGrid.innerHTML = ''; mGrid.innerHTML = '';
-
-            const driveBtn = document.getElementById('open-drive-btn');
-            driveBtn.href = `https://drive.google.com/drive/folders/${currentId}`;
-            driveBtn.classList.remove('hidden');
-
-            folders.forEach(f => {
-                const card = document.createElement('div');
-                card.className = 'item-card cursor-pointer group';
-                card.innerHTML = `
-                    <div class="card-cover" id="cover-${f.id}">
-                        <i class="fas fa-folder folder-placeholder"></i>
-                    </div>
-                    <div class="folder-title">
-                        <p class="text-sm font-bold text-gray-700 truncate">${f.name}</p>
-                    </div>`;
-                card.onclick = () => load(f.id);
-                fGrid.appendChild(card);
-                fetchCover(f.id);
-            });
-
-            mediaList = files.map(f => ({
-                id: f.id,
-                name: f.name,
-                isImg: f.mimeType.startsWith('image/'),
-                isMov: f.name.toLowerCase().endsWith('.mov'),
-                thumb: `https://drive.google.com/thumbnail?id=${f.id}&sz=w600`,
-                src: f.mimeType.startsWith('image/') ? `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600` : `https://drive.google.com/uc?export=download&id=${f.id}`,
-                downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
-                preview: `https://drive.google.com/file/d/${f.id}/preview`
-            }));
-
-            mediaList.forEach((m, i) => {
-                const card = document.createElement('div');
-                card.className = 'item-card cursor-pointer media-item';
-                card.dataset.id = m.id;
-                card.innerHTML = `
-                    <div class="card-cover">
-                        <div class="select-overlay"><i class="fas fa-check"></i></div>
-                        <img src="${m.thumb}" class="w-full h-full object-cover" loading="lazy">
-                        ${!m.isImg ? '<div class="absolute inset-0 flex items-center justify-center bg-black/20"><i class="fas fa-play text-white text-3xl"></i></div>' : ''}
-                    </div>`;
-                card.onclick = () => isSelectMode ? toggleSelectItem(m.id, card) : openViewer(i);
-                mGrid.appendChild(card);
-            });
-            mContainer.classList.remove('hidden');
-            document.getElementById('toggle-select-mode').classList.toggle('hidden', mediaList.length === 0);
-        }
-
-        function toggleSelectMode() {
-            isSelectMode = !isSelectMode;
-            const btn = document.getElementById('toggle-select-mode');
-            const grid = document.getElementById('files-grid');
-            if (isSelectMode) {
-                btn.innerHTML = '<i class="fas fa-times"></i> 取消選取';
-                btn.classList.replace('bg-gray-200', 'bg-gray-700'); btn.classList.replace('text-gray-700', 'text-white');
-                grid.classList.add('selecting');
-            } else {
-                btn.innerHTML = '<i class="fas fa-check-square"></i> 選取照片';
-                btn.classList.replace('bg-gray-700', 'bg-gray-200'); btn.classList.replace('text-white', 'text-gray-700');
-                grid.classList.remove('selecting');
-                selectedIds.clear(); document.querySelectorAll('.media-item').forEach(el => el.classList.remove('selected'));
-            }
-            updateUIForSelectMode();
-        }
-
-        function toggleSelectItem(id, element) {
-            if (selectedIds.has(id)) { selectedIds.delete(id); element.classList.remove('selected'); }
-            else { selectedIds.add(id); element.classList.add('selected'); }
-            updateUIForSelectMode();
-        }
-
-        function updateUIForSelectMode() {
-            const batchBtn = document.getElementById('batch-download');
-            document.getElementById('select-count').innerText = selectedIds.size;
-            batchBtn.classList.toggle('hidden', selectedIds.size === 0);
-        }
-
-        async function startBatchDownload() {
-            showLoading(true, `正在打包 ${selectedIds.size} 個檔案...`);
-            const zip = new JSZip();
-            const downloadItems = mediaList.filter(m => selectedIds.has(m.id));
-            try {
-                for (let item of downloadItems) {
-                    const response = await fetch(item.downloadUrl);
-                    const blob = await response.blob();
-                    zip.file(item.name, blob);
-                }
-                const content = await zip.generateAsync({type:"blob"});
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = `相簿下載_${new Date().getTime()}.zip`;
-                link.click();
-                toggleSelectMode();
-            } catch (err) { alert("下載失敗。"); } finally { showLoading(false); }
-        }
-
-        async function fetchCover(fid) {
-            try {
-                const q = `'${fid}' in parents and mimeType contains 'image/' and trashed=false`;
-                const res = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
-                if (res.files && res.files.length > 0) {
-                    setCoverImage(fid, res.files[0].id);
-                } else {
-                    const fQ = `'${fid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-                    const fRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(fQ)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
-                    if (fRes.files && fRes.files.length > 0) {
-                        const subQ = `'${fRes.files[0].id}' in parents and mimeType contains 'image/' and trashed=false`;
-                        const subRes = await fetch(`${driveApiUrl}/files?q=${encodeURIComponent(subQ)}&fields=files(id)&pageSize=1&key=${apiKey}`).then(r => r.json());
-                        if (subRes.files && subRes.files.length > 0) setCoverImage(fid, subRes.files[0].id);
-                    }
-                }
-            } catch (err) {}
-        }
-
-        function setCoverImage(folderId, imageId) {
-            const el = document.getElementById(`cover-${folderId}`);
-            if (el) { el.style.backgroundImage = `url(https://drive.google.com/thumbnail?id=${imageId}&sz=w600)`; el.innerHTML = ''; }
-        }
-
-        function openViewer(index) {
-            currentIndex = index; document.getElementById('viewer').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; showMedia();
-        }
-
-        function showMedia() {
-            const m = mediaList[currentIndex];
-            const img = document.getElementById('view-img'); const vid = document.getElementById('view-video'); const mov = document.getElementById('view-mov');
-            [img, vid, mov].forEach(el => el.style.display = 'none');
-            if (m.isImg) { img.src = m.src; img.style.display = 'block'; img.style.transform = `rotate(${rotations[m.id] || 0}deg)`; }
-            else if (m.isMov) { mov.src = m.preview; mov.style.display = 'block'; }
-            else { vid.src = m.src; vid.style.display = 'block'; vid.play(); }
-        }
-
-        function next() { currentIndex = (currentIndex + 1) % mediaList.length; showMedia(); }
-        function prev() { currentIndex = (currentIndex - 1 + mediaList.length) % mediaList.length; showMedia(); }
-        function rotate() {
-            const m = mediaList[currentIndex]; if (!m.isImg) return;
-            rotations[m.id] = ((rotations[m.id] || 0) + 90) % 360;
-            document.getElementById('view-img').style.transform = `rotate(${rotations[m.id]}deg)`;
-        }
-        function togglePlay() {
-            isPlaying = !isPlaying; const btn = document.getElementById('btn-slideshow');
-            if (isPlaying) { btn.innerHTML = '<i class="fas fa-pause"></i>'; playTimer = setInterval(next, 3000); }
-            else { btn.innerHTML = '<i class="fas fa-play"></i>'; clearInterval(playTimer); }
-        }
-        function downloadCurrent() {
-            const m = mediaList[currentIndex]; const link = document.createElement('a');
-            link.href = m.downloadUrl; link.download = m.name; link.target = '_blank'; link.click();
-        }
-        function closeViewer() {
-            document.getElementById('viewer').classList.add('hidden'); document.body.style.overflow = '';
-            document.getElementById('view-video').pause(); if (isPlaying) togglePlay();
-        }
-        function updateBread(name) {
-            const b = document.getElementById('breadcrumb');
-            b.innerHTML = `<span class="cursor-pointer hover:text-[#f39c12]" onclick="load(rootFolderId)">首頁</span>`;
-            if (currentId !== rootFolderId) {
-                b.innerHTML += ` <i class="fas fa-chevron-right text-[10px] mx-2 text-gray-300"></i> <span class="text-[#f39c12] font-bold">${name}</span>`;
-            }
-        }
-        function showLoading(s, text = "正在載入...") {
-            document.getElementById('loading-area').classList.toggle('hidden', !s);
-            document.getElementById('main-content').classList.toggle('hidden', s);
-            document.getElementById('loading-text').innerText = text;
-        }
-    </script>
+<div class="min-h-screen">
+<header class="sticky top-0 z-40"><div class="container mx-auto px-4 py-3 flex justify-between items-center"><h1 class="text-xl font-bold text-gray-800">{{SCHOOL_NAME}} <span class="text-[#f39c12]">活動相簿</span></h1><button id="refresh-btn" class="text-gray-400 hover:text-[#f39c12] text-xl"><i class="fas fa-sync-alt"></i></button></div></header>
+<div class="container mx-auto px-4 py-5 flex flex-wrap justify-between items-center gap-4"><div id="breadcrumb" class="text-sm text-gray-500"><span class="cursor-pointer hover:text-[#f39c12]" onclick="enterLatestSchoolYear()">最新學年度</span></div><div class="flex items-center space-x-2"><button id="toggle-select-mode" class="action-btn bg-gray-200 text-gray-700"><i class="fas fa-check-square"></i> 選取照片</button><button id="batch-download" class="action-btn bg-[#f39c12] text-white hidden"><i class="fas fa-file-archive"></i> 下載選中項目 (<span id="select-count">0</span>)</button><a id="open-drive-btn" target="_blank" class="action-btn bg-white border border-gray-200 text-[#4285F4] shadow-sm hidden">開啟雲端資料夾</a></div></div>
+<main class="container mx-auto px-4 pb-20"><div id="loading-area" class="flex flex-col items-center justify-center py-20"><div class="loading-spinner mb-4"></div><p id="loading-text" class="text-gray-400 text-sm italic">正在載入相簿...</p></div><div id="main-content" class="hidden"><div id="folders-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mb-12"></div><div id="files-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div></div></main>
+<div id="viewer" class="fixed inset-0 bg-black/95 z-50 hidden flex flex-col backdrop-blur-xl"><div class="flex justify-end items-center p-6 space-x-4 z-[70]"><button id="btn-download" class="control-btn"><i class="fas fa-download"></i></button><button id="btn-rotate" class="control-btn"><i class="fas fa-redo"></i></button><button id="btn-slideshow" class="control-btn"><i class="fas fa-play"></i></button><button id="btn-close" class="control-btn bg-red-600/80"><i class="fas fa-times"></i></button></div><div class="flex-grow flex items-center justify-center relative"><button id="btn-prev" class="absolute left-6 text-white/30 hover:text-white text-5xl z-[60] p-4"><i class="fas fa-chevron-left"></i></button><div class="max-w-full max-h-full flex items-center justify-center p-4"><img id="view-img" class="max-w-full max-h-[85vh] object-contain shadow-2xl" style="display:none"><video id="view-video" class="max-w-full max-h-[85vh]" controls style="display:none"></video><iframe id="view-mov" class="w-[90vw] h-[75vh] border-0" style="display:none"></iframe></div><button id="btn-next" class="absolute right-6 text-white/30 hover:text-white text-5xl z-[60] p-4"><i class="fas fa-chevron-right"></i></button></div></div>
+</div>
+<script>
+const rootFolderId='{{ROOT_FOLDER_ID}}';
+const apiKey='{{API_KEY}}';
+const driveApiUrl='https://www.googleapis.com/drive/v3';
+const GRID_THUMB=420,VIEW_THUMB=1600,FOLDER_CACHE_MS=120000,COVER_CACHE_MS=43200000,EMPTY_CACHE_MS=600000,MAX_COVER_JOBS=4;
+let currentId='',currentSchoolYear='',schoolYearFolderId='',mediaList=[],currentIndex=0,isPlaying=false,isSelectMode=false,playTimer=null,loadSerial=0,activeLoadController=null,coverGeneration=0,activeCoverJobs=0;
+const selectedIds=new Set(),rotations={},folderCache=new Map(),coverMemory=new Map(),coverQueued=new Set();
+let coverObserver=null,coverQueue=[];
+window.addEventListener('load',()=>{bindEvents();initCoverObserver();enterLatestSchoolYear()});
+function bindEvents(){
+ document.getElementById('btn-close').onclick=closeViewer;document.getElementById('btn-prev').onclick=prev;document.getElementById('btn-next').onclick=next;document.getElementById('btn-rotate').onclick=rotate;document.getElementById('btn-slideshow').onclick=togglePlay;document.getElementById('btn-download').onclick=downloadCurrent;document.getElementById('toggle-select-mode').onclick=toggleSelectMode;document.getElementById('batch-download').onclick=startBatchDownload;
+ document.getElementById('refresh-btn').onclick=()=>{if(!currentId||currentId===schoolYearFolderId)enterLatestSchoolYear();else load(currentId,true)};
+ document.addEventListener('keydown',e=>{if(document.getElementById('viewer').classList.contains('hidden'))return;if(e.key==='Escape')closeViewer();if(e.key==='ArrowLeft')prev();if(e.key==='ArrowRight')next()});
+}
+function initCoverObserver(){coverObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){const el=entry.target;coverObserver.unobserve(el);queueCover(el.dataset.folderId,Number(el.dataset.coverGeneration))}}),{rootMargin:'350px 0px',threshold:.01})}
+async function fetchJson(url,options={}){const r=await fetch(url,options);if(!r.ok)throw new Error(`Drive API ${r.status}: ${r.statusText}`);const d=await r.json();if(d.error)throw new Error(d.error.message||'Drive API error');return d}
+async function enterLatestSchoolYear(){showLoading(true,'正在尋找最新學年度相簿...');try{const q=`'${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;const r=await fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=1000&key=${apiKey}`);const ys=(r.files||[]).map(f=>{const m=f.name.trim().match(/^(\d{2,4})/);return m?{...f,year:parseInt(m[1],10)}:null}).filter(Boolean).sort((a,b)=>b.year-a.year||b.name.localeCompare(a.name,'zh-Hant'));if(!ys.length){showNoYear();return}const latest=ys[0];currentSchoolYear=String(latest.year);schoolYearFolderId=latest.id;await load(latest.id)}catch(e){console.error(e);showLoading(false);showLoadError(e)}}
+function getFolderCache(id){const c=folderCache.get(id);if(!c)return null;if(Date.now()-c.time>FOLDER_CACHE_MS){folderCache.delete(id);return null}return c.data}
+async function load(id,force=false){const serial=++loadSerial;currentId=id;coverGeneration++;isSelectMode=false;selectedIds.clear();updateSelectUI();showLoading(true,'正在讀取雲端內容...');if(activeLoadController)activeLoadController.abort();activeLoadController=new AbortController();try{if(!force){const c=getFolderCache(id);if(c){render(c.name,c.folders,c.files);return}}const s=activeLoadController.signal;const fq=`'${id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,mq=`'${id}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed=false`;const [meta,fr,mr]=await Promise.all([fetchJson(`${driveApiUrl}/files/${id}?fields=name&key=${apiKey}`,{signal:s}),fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(fq)}&fields=files(id,name)&pageSize=1000&key=${apiKey}`,{signal:s}),fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(mq)}&fields=files(id,name,mimeType)&pageSize=1000&orderBy=name desc&key=${apiKey}`,{signal:s})]);if(serial!==loadSerial)return;const folders=(fr.files||[]).slice().sort((a,b)=>{const n=x=>parseInt((x.match(/^\d+/)||['0'])[0],10);return n(b.name)-n(a.name)||b.name.localeCompare(a.name,'zh-Hant')});const data={name:meta.name,folders,files:mr.files||[]};folderCache.set(id,{time:Date.now(),data});render(data.name,data.folders,data.files)}catch(e){if(e.name!=='AbortError'){console.error(e);showLoadError(e)}}finally{if(serial===loadSerial&&!document.getElementById('loading-area').querySelector('.fa-circle-exclamation'))showLoading(false)}}
+function esc(t=''){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function thumb(id,w){return `https://drive.google.com/thumbnail?id=${id}&sz=w${w}`}
+function render(name,folders,files){updateBread(name);const fg=document.getElementById('folders-grid'),mg=document.getElementById('files-grid');fg.replaceChildren();mg.replaceChildren();const db=document.getElementById('open-drive-btn');db.href=`https://drive.google.com/drive/folders/${currentId}`;db.classList.remove('hidden');const ff=document.createDocumentFragment(),gen=coverGeneration;folders.forEach(f=>{const card=document.createElement('div');card.className='item-card cursor-pointer group';card.innerHTML=`<div class="card-cover" id="cover-${f.id}" data-folder-id="${f.id}" data-cover-generation="${gen}"><i class="fas fa-folder folder-placeholder"></i></div><div class="folder-title"><p class="text-sm font-bold text-gray-700 truncate" title="${esc(f.name)}">${esc(f.name)}</p></div>`;card.onclick=()=>load(f.id);ff.appendChild(card)});fg.appendChild(ff);fg.querySelectorAll('.card-cover[data-folder-id]').forEach(el=>{const c=readCoverCache(el.dataset.folderId);if(c!==undefined){if(c)setCover(el.dataset.folderId,c)}else coverObserver.observe(el)});mediaList=files.map(f=>({id:f.id,name:f.name,isImg:f.mimeType.startsWith('image/'),isMov:f.name.toLowerCase().endsWith('.mov')||f.mimeType==='video/quicktime',thumb:thumb(f.id,GRID_THUMB),src:f.mimeType.startsWith('image/')?thumb(f.id,VIEW_THUMB):`https://drive.google.com/uc?export=download&id=${f.id}`,downloadUrl:`https://drive.google.com/uc?export=download&id=${f.id}`,preview:`https://drive.google.com/file/d/${f.id}/preview`}));const mf=document.createDocumentFragment();mediaList.forEach((m,i)=>{const card=document.createElement('div');card.className='item-card cursor-pointer media-item';card.dataset.id=m.id;card.innerHTML=`<div class="card-cover"><div class="select-overlay"><i class="fas fa-check"></i></div><img src="${m.thumb}" class="w-full h-full object-cover" loading="${i<10?'eager':'lazy'}" decoding="async" fetchpriority="${i<6?'high':'low'}">${!m.isImg?'<div class="absolute inset-0 flex items-center justify-center bg-black/20"><i class="fas fa-play text-white text-3xl"></i></div>':''}</div>`;card.onclick=()=>isSelectMode?toggleSelectItem(m.id,card):openViewer(i);mf.appendChild(card)});mg.appendChild(mf);document.getElementById('main-content').classList.remove('hidden');document.getElementById('toggle-select-mode').classList.toggle('hidden',!mediaList.length)}
+function coverKey(id){return `activity-album-cover-v3:${id}`}
+function readCoverCache(id){if(coverMemory.has(id))return coverMemory.get(id);try{const raw=sessionStorage.getItem(coverKey(id));if(!raw)return undefined;const o=JSON.parse(raw),max=o.imageId?COVER_CACHE_MS:EMPTY_CACHE_MS;if(Date.now()-o.time>max){sessionStorage.removeItem(coverKey(id));return undefined}const v=o.imageId||null;coverMemory.set(id,v);return v}catch{return undefined}}
+function saveCoverCache(id,imageId){const v=imageId||null;coverMemory.set(id,v);try{sessionStorage.setItem(coverKey(id),JSON.stringify({imageId:v,time:Date.now()}))}catch{}}
+function queueCover(id,gen){if(!id||gen!==coverGeneration)return;const c=readCoverCache(id);if(c!==undefined){if(c)setCover(id,c);return}if(coverQueued.has(id))return;coverQueued.add(id);coverQueue.push({id,gen});processCoverQueue()}
+function processCoverQueue(){while(activeCoverJobs<MAX_COVER_JOBS&&coverQueue.length){const job=coverQueue.shift();if(job.gen!==coverGeneration){coverQueued.delete(job.id);continue}activeCoverJobs++;findCover(job.id).then(img=>{saveCoverCache(job.id,img);if(img&&job.gen===coverGeneration)setCover(job.id,img)}).catch(console.error).finally(()=>{activeCoverJobs--;coverQueued.delete(job.id);processCoverQueue()})}}
+async function findCover(id){const q=`'${id}' in parents and mimeType contains 'image/' and trashed=false`;const r=await fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(q)}&fields=files(id)&pageSize=1&key=${apiKey}`);if(r.files?.length)return r.files[0].id;const fq=`'${id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;const fr=await fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(fq)}&fields=files(id)&pageSize=3&key=${apiKey}`);for(const sub of fr.files||[]){const sq=`'${sub.id}' in parents and mimeType contains 'image/' and trashed=false`;const sr=await fetchJson(`${driveApiUrl}/files?q=${encodeURIComponent(sq)}&fields=files(id)&pageSize=1&key=${apiKey}`);if(sr.files?.length)return sr.files[0].id}return null}
+function setCover(id,img){const el=document.getElementById(`cover-${id}`);if(el){el.style.backgroundImage=`url(${thumb(img,GRID_THUMB)})`;el.innerHTML=''}}
+function toggleSelectMode(){isSelectMode=!isSelectMode;const b=document.getElementById('toggle-select-mode'),g=document.getElementById('files-grid');if(isSelectMode){b.innerHTML='<i class="fas fa-times"></i> 取消選取';b.classList.replace('bg-gray-200','bg-gray-700');b.classList.replace('text-gray-700','text-white');g.classList.add('selecting')}else{b.innerHTML='<i class="fas fa-check-square"></i> 選取照片';b.classList.replace('bg-gray-700','bg-gray-200');b.classList.replace('text-white','text-gray-700');g.classList.remove('selecting');selectedIds.clear();document.querySelectorAll('.media-item').forEach(e=>e.classList.remove('selected'))}updateSelectUI()}
+function toggleSelectItem(id,el){if(selectedIds.has(id)){selectedIds.delete(id);el.classList.remove('selected')}else{selectedIds.add(id);el.classList.add('selected')}updateSelectUI()}
+function updateSelectUI(){document.getElementById('select-count').innerText=selectedIds.size;document.getElementById('batch-download').classList.toggle('hidden',!selectedIds.size)}
+function loadScript(src,name){return new Promise((ok,bad)=>{if(window[name])return ok();const old=document.querySelector(`script[data-dynamic-src="${src}"]`);if(old){old.addEventListener('load',ok,{once:true});old.addEventListener('error',bad,{once:true});return}const s=document.createElement('script');s.src=src;s.async=true;s.dataset.dynamicSrc=src;s.onload=ok;s.onerror=bad;document.head.appendChild(s)})}
+async function startBatchDownload(){if(!selectedIds.size)return;showLoading(true,`準備打包 ${selectedIds.size} 個檔案...`);try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','JSZip');const zip=new JSZip(),items=mediaList.filter(m=>selectedIds.has(m.id));let done=0;for(let i=0;i<items.length;i+=3){await Promise.all(items.slice(i,i+3).map(async item=>{const r=await fetch(item.downloadUrl);if(!r.ok)throw new Error(`下載失敗：${item.name}`);zip.file(item.name,await r.blob());done++;document.getElementById('loading-text').innerText=`正在下載 ${done}/${items.length}...`}))}document.getElementById('loading-text').innerText='正在建立 ZIP...';const blob=await zip.generateAsync({type:'blob',compression:'STORE'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`相簿下載_${Date.now()}.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);toggleSelectMode()}catch(e){console.error(e);alert('下載失敗，請嘗試單張下載或確認網路連線。')}finally{showLoading(false)}}
+function openViewer(i){currentIndex=i;document.getElementById('viewer').classList.remove('hidden');document.body.style.overflow='hidden';showMedia()}
+function showMedia(){if(!mediaList.length)return;const m=mediaList[currentIndex],img=document.getElementById('view-img'),vid=document.getElementById('view-video'),mov=document.getElementById('view-mov');vid.pause();[img,vid,mov].forEach(e=>e.style.display='none');if(m.isImg){img.src=m.src;img.style.display='block';img.style.transform=`rotate(${rotations[m.id]||0}deg)`}else if(m.isMov){mov.src=m.preview;mov.style.display='block'}else{vid.src=m.src;vid.style.display='block';vid.play().catch(()=>{})}preloadNeighbors()}
+function preloadNeighbors(){if(mediaList.length<2)return;[(currentIndex+1)%mediaList.length,(currentIndex-1+mediaList.length)%mediaList.length].forEach(i=>{const m=mediaList[i];if(m?.isImg){const x=new Image();x.src=m.src}})}
+function next(){if(mediaList.length){currentIndex=(currentIndex+1)%mediaList.length;showMedia()}}function prev(){if(mediaList.length){currentIndex=(currentIndex-1+mediaList.length)%mediaList.length;showMedia()}}
+function rotate(){const m=mediaList[currentIndex];if(!m?.isImg)return;rotations[m.id]=((rotations[m.id]||0)+90)%360;document.getElementById('view-img').style.transform=`rotate(${rotations[m.id]}deg)`}
+function togglePlay(){isPlaying=!isPlaying;const b=document.getElementById('btn-slideshow');if(isPlaying){b.innerHTML='<i class="fas fa-pause"></i>';playTimer=setInterval(next,3000)}else{b.innerHTML='<i class="fas fa-play"></i>';clearInterval(playTimer);playTimer=null}}
+function downloadCurrent(){const m=mediaList[currentIndex];if(!m)return;const a=document.createElement('a');a.href=m.downloadUrl;a.download=m.name;a.target='_blank';a.click()}
+function closeViewer(){document.getElementById('viewer').classList.add('hidden');document.body.style.overflow='';const v=document.getElementById('view-video'),m=document.getElementById('view-mov');v.pause();v.removeAttribute('src');m.removeAttribute('src');if(isPlaying)togglePlay()}
+function updateBread(name){const b=document.getElementById('breadcrumb');b.innerHTML=`<span class="cursor-pointer hover:text-[#f39c12]" onclick="enterLatestSchoolYear()">${currentSchoolYear?currentSchoolYear+' 學年度':'最新學年度'}</span>`;if(currentId&&currentId!==schoolYearFolderId)b.innerHTML+=` <i class="fas fa-chevron-right text-[10px] mx-2 text-gray-300"></i><span class="text-[#f39c12] font-bold">${esc(name)}</span>`}
+function showLoading(on,text='正在載入...'){document.getElementById('loading-area').classList.toggle('hidden',!on);document.getElementById('main-content').classList.toggle('hidden',on);document.getElementById('loading-text').innerText=text}
+function showNoYear(){currentId='';currentSchoolYear='';schoolYearFolderId='';document.getElementById('main-content').classList.add('hidden');document.getElementById('open-drive-btn').classList.add('hidden');document.getElementById('toggle-select-mode').classList.add('hidden');const l=document.getElementById('loading-area');l.classList.remove('hidden');l.innerHTML='<div class="text-center py-14 px-6"><div class="text-5xl mb-4">📸</div><p class="text-xl font-bold text-gray-700 mb-2">尚未找到學年度相簿</p><p class="text-gray-400 text-sm mb-5">請在 Root 建立以年度數字開頭的資料夾，例如「115學年度」。</p><button onclick="location.reload()" class="action-btn bg-[#f39c12] text-white"><i class="fas fa-sync-alt"></i> 重新檢查</button></div>'}
+function showLoadError(e){const l=document.getElementById('loading-area');l.classList.remove('hidden');l.innerHTML=`<div class="text-center py-12"><i class="fas fa-circle-exclamation text-4xl text-[#f39c12] mb-4"></i><p class="font-bold text-gray-700 mb-2">相簿載入失敗</p><p class="text-gray-400 text-sm mb-4">${esc(e.message||'請稍後再試')}</p><button onclick="location.reload()" class="action-btn bg-[#f39c12] text-white">重新載入</button></div>`}
+</script>
 </body>
-</html>
-</textarea>
-
-    <script>
-        function extractFolderId(input) {
-            const match = input.match(/folders\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : input.trim(); 
-        }
-
-        function generateApp() {
-            let schoolNameInput = document.getElementById('input-school-name').value.trim();
-            const apiKeyInput = document.getElementById('input-api-key').value.trim();
-            const rootFolderInput = document.getElementById('input-root-folder').value.trim();
-            const defaultFolderInput = document.getElementById('input-default-folder').value.trim();
-            
-            if (!apiKeyInput || !rootFolderInput || !defaultFolderInput) {
-                alert('請確實填寫 API Key 與資料夾資訊！'); return;
-            }
-
-            if (!schoolNameInput) schoolNameInput = '活動相簿';
-
-            const rootFolderId = extractFolderId(rootFolderInput);
-            const defaultFolderId = extractFolderId(defaultFolderInput);
-            const template = document.getElementById('app-template').value;
-            const generatedHtml = template
-                .replace(/\{\{SCHOOL_NAME\}\}/g, schoolNameInput)
-                .replace(/\{\{API_KEY\}\}/g, apiKeyInput)
-                .replace(/\{\{ROOT_FOLDER_ID\}\}/g, rootFolderId)
-                .replace(/\{\{DEFAULT_FOLDER_ID\}\}/g, defaultFolderId);
-
-            document.getElementById('preview-iframe').srcdoc = generatedHtml;
-            document.getElementById('code-output').value = generatedHtml;
-            switchTab('preview');
-            
-            const btn = document.getElementById('btn-generate');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 生成成功！';
-            btn.classList.add('bg-green-600'); btn.classList.remove('bg-orange-600');
-            setTimeout(() => { btn.innerHTML = originalText; btn.classList.remove('bg-green-600'); btn.classList.add('bg-orange-600'); }, 1500);
-        }
-
-        function copyCode() {
-            const codeOutput = document.getElementById('code-output');
-            if (!codeOutput.value) { alert('請先點擊「生成」！'); return; }
-            codeOutput.select(); document.execCommand('copy');
-
-            const btnCopy = document.getElementById('btn-copy');
-            const originalHtml = btnCopy.innerHTML;
-            btnCopy.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> <span class="text-green-400">已複製</span>';
-            btnCopy.classList.add('border-green-500');
-            setTimeout(() => { btnCopy.innerHTML = originalHtml; btnCopy.classList.remove('border-green-500'); }, 2000);
-        }
-
-        function switchTab(tabName) {
-            const iframe = document.getElementById('preview-iframe');
-            const codeOut = document.getElementById('code-output');
-            const tabPreview = document.getElementById('tab-preview');
-            const tabCode = document.getElementById('tab-code');
-
-            if (tabName === 'preview') {
-                iframe.classList.remove('hidden'); codeOut.classList.add('hidden');
-                tabPreview.className = "px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white transition-colors";
-                tabCode.className = "px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors";
-            } else {
-                iframe.classList.add('hidden'); codeOut.classList.remove('hidden');
-                tabCode.className = "px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white transition-colors";
-                tabPreview.className = "px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors";
-            }
-        }
-    </script>
+</html></textarea>
+<script>
+function extractFolderId(input){const v=input.trim(),m=v.match(/folders\/([a-zA-Z0-9_-]+)/),q=v.match(/[?&]id=([a-zA-Z0-9_-]+)/);return m?m[1]:q?q[1]:v}
+function escapeTemplateText(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function generateApp(){let school=document.getElementById('input-school-name').value.trim();const key=document.getElementById('input-api-key').value.trim(),root=document.getElementById('input-root-folder').value.trim();if(!key||!root){alert('請填寫 Google API Key 與 Root 資料夾！');return}if(!school)school='活動相簿';school=escapeTemplateText(school);const template=document.getElementById('app-template').value,html=template.replace(/\{\{SCHOOL_NAME\}\}/g,()=>school).replace(/\{\{API_KEY\}\}/g,()=>key).replace(/\{\{ROOT_FOLDER_ID\}\}/g,()=>extractFolderId(root));document.getElementById('preview-iframe').srcdoc=html;document.getElementById('code-output').value=html;switchTab('preview');const b=document.getElementById('btn-generate'),old=b.innerHTML;b.innerHTML='✓ 生成成功！';b.classList.add('bg-green-600');b.classList.remove('bg-orange-600');setTimeout(()=>{b.innerHTML=old;b.classList.remove('bg-green-600');b.classList.add('bg-orange-600')},1500)}
+async function copyCode(){const out=document.getElementById('code-output');if(!out.value){alert('請先點擊「生成相簿」！');return}try{await navigator.clipboard.writeText(out.value)}catch{out.classList.remove('hidden');out.select();document.execCommand('copy')}const b=document.getElementById('btn-copy'),old=b.innerHTML;b.innerHTML='<span class="text-green-400">✓ 已複製</span>';b.classList.add('border-green-500');setTimeout(()=>{b.innerHTML=old;b.classList.remove('border-green-500')},1800)}
+function switchTab(t){const i=document.getElementById('preview-iframe'),c=document.getElementById('code-output'),p=document.getElementById('tab-preview'),o=document.getElementById('tab-code');if(t==='preview'){i.classList.remove('hidden');c.classList.add('hidden');p.className='px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white';o.className='px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400'}else{i.classList.add('hidden');c.classList.remove('hidden');o.className='px-6 py-3 text-sm font-medium border-t-2 border-orange-500 bg-gray-800 text-white';p.className='px-6 py-3 text-sm font-medium border-t-2 border-transparent text-gray-400'}}
+</script>
 </body>
 </html>
